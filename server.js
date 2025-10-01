@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs-extra');
+const clientRoutes = require('./src/routes/clientRoutes');
+const materialRoutes = require('./src/routes/materialRoutes');
 
 // Import routes
 const budgetRoutes = require('./src/routes/budgetRoutes');
@@ -32,6 +34,8 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/clients', clientRoutes);
+app.use('/materials', materialRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
