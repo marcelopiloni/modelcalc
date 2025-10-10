@@ -1,84 +1,151 @@
-class Budget {
-  constructor(data) {
-    this.id = data.id;
-    this.projectId = data.projectId;
-    this.clientName = data.clientName;
-    this.description = data.description;
-    this.cadFiles = data.cadFiles || [];
-    this.materials = data.materials || [];
-    this.processes = data.processes || [];
-    this.laborCost = data.laborCost || 0;
-    this.materialCost = data.materialCost || 0;
-    this.processingCost = data.processingCost || 0;
-    this.totalCost = data.totalCost || 0;
-    this.margin = data.margin || 0;
-    this.finalPrice = data.finalPrice || 0;
-    this.status = data.status || 'draft'; // draft, pending, approved, rejected
-    this.createdAt = data.createdAt || new Date();
-    this.updatedAt = data.updatedAt || new Date();
-  }
+const mongoose = require('mongoose');
 
-  calculateTotalCost() {
+const materialSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    quantity: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    unitCost: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    totalCost: {
+        type: Number
+    }
+});
+
+const processSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    duration: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    hourlyRate: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    totalCost: {
+        type: Number
+    }
+});
+
+const budgetSchema = new mongoose.Schema({
+    projectId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project',
+        required: true
+    },
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    cadFiles: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CADFile'
+    }],
+    materials: [materialSchema],
+    processes: [processSchema],
+    laborCost: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    materialCost: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    processingCost: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    totalCost: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    margin: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    finalPrice: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    status: {
+        type: String,
+        enum: ['draft', 'pending', 'approved', 'rejected'],
+        default: 'draft'
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    }
+}, {
+    timestamps: true
+});
+
+// Middleware para calcular custos antes de salvar
+budgetSchema.pre('save', function(next) {
+    // Calcular custo total de materiais
+    this.materialCost = this.materials.reduce((sum, material) => {
+        material.totalCost = material.quantity * material.unitCost;
+        return sum + material.totalCost;
+    }, 0);
+
+    // Calcular custo total de processos
+    this.processingCost = this.processes.reduce((sum, process) => {
+        process.totalCost = process.duration * process.hourlyRate;
+        return sum + process.totalCost;
+    }, 0);
+
+    // Calcular custo total
     this.totalCost = this.laborCost + this.materialCost + this.processingCost;
+
+    // Calcular preço final com margem
     this.finalPrice = this.totalCost * (1 + this.margin / 100);
-    this.updatedAt = new Date();
-    return this.totalCost;
-  }
 
-  addMaterial(material) {
+    next();
+});
+
+// Método para adicionar material
+budgetSchema.methods.addMaterial = function(material) {
     this.materials.push({
-      name: material.name,
-      quantity: material.quantity,
-      unitCost: material.unitCost,
-      totalCost: material.quantity * material.unitCost
+        name: material.name,
+        quantity: material.quantity,
+        unitCost: material.unitCost
     });
-    this.updateMaterialCost();
-  }
+    return this.save();
+};
 
-  updateMaterialCost() {
-    this.materialCost = this.materials.reduce((sum, material) => sum + material.totalCost, 0);
-    this.calculateTotalCost();
-  }
-
-  addProcess(process) {
+// Método para adicionar processo
+budgetSchema.methods.addProcess = function(process) {
     this.processes.push({
-      name: process.name,
-      duration: process.duration,
-      hourlyRate: process.hourlyRate,
-      totalCost: process.duration * process.hourlyRate
+        name: process.name,
+        duration: process.duration,
+        hourlyRate: process.hourlyRate
     });
-    this.updateProcessingCost();
-  }
+    return this.save();
+};
 
-  updateProcessingCost() {
-    this.processingCost = this.processes.reduce((sum, process) => sum + process.totalCost, 0);
-    this.calculateTotalCost();
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      projectId: this.projectId,
-      clientName: this.clientName,
-      description: this.description,
-      cadFiles: this.cadFiles,
-      materials: this.materials,
-      processes: this.processes,
-      costs: {
-        labor: this.laborCost,
-        material: this.materialCost,
-        processing: this.processingCost,
-        total: this.totalCost
-      },
-      pricing: {
-        margin: this.margin,
-        finalPrice: this.finalPrice
-      },
-      status: this.status,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
-  }
-}
-
-module.exports = Budget;
+module.exports = mongoose.model('Budget', budgetSchema);
