@@ -46,6 +46,7 @@ fs.ensureDirSync(excelDir);
 // Static files
 app.use('/uploads', express.static(uploadsDir));
 app.use('/excel', express.static(excelDir));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes
 app.use('/api/auth', userRoutes);
