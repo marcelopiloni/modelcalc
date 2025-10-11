@@ -21,12 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Funções auxiliares
-    function showSection(sectionId) {
-        Object.values(sections).forEach(section => section.classList.add('hidden'));
-        sections[sectionId].classList.remove('hidden');
+    window.showSection = function(sectionId) {
+        // Get all sections
+        const allSections = document.querySelectorAll('main > div[id$="-section"]');
+        allSections.forEach(section => section.classList.add('hidden'));
+        
+        // Show the requested section
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.classList.remove('hidden');
+        }
     }
 
-    function showAlert(message, type = 'error') {
+    window.showAlert = function(message, type = 'error') {
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
         alert.textContent = message;
@@ -276,3 +283,34 @@ function deleteBudget(id) {
 function downloadExcel(id) {
     budgets.downloadExcel(id);
 }
+
+// Global function to check authentication
+window.isAuthenticated = function() {
+    return localStorage.getItem('token') !== null;
+}
+
+// Navigation for Projects
+document.getElementById('nav-projects').addEventListener('click', () => {
+    if (isAuthenticated()) {
+        showSection('projects-section');
+        loadProjects();
+    }
+});
+
+// Navigation for Materials
+document.getElementById('nav-materials').addEventListener('click', () => {
+    if (isAuthenticated()) {
+        showSection('materials-section');
+        loadMaterials();
+    }
+});
+
+// Project new button
+document.getElementById('new-project-btn').addEventListener('click', () => {
+    showNewProject();
+});
+
+// Material new button
+document.getElementById('new-material-btn').addEventListener('click', () => {
+    showNewMaterial();
+});

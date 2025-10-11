@@ -233,3 +233,24 @@ const budgets = {
         window.open(`/api/budgets/${id}/excel?token=${token}`, '_blank');
     }
 };
+
+// Function to load projects in select dropdown
+async function loadProjectsInSelect() {
+    try {
+        const projectsList = await projects.list();
+        const projectSelect = document.getElementById('budget-project');
+        
+        projectSelect.innerHTML = '<option value="">Selecione um projeto</option>';
+        
+        projectsList.forEach(project => {
+            if (project.status === 'active') {
+                const option = document.createElement('option');
+                option.value = project._id;
+                option.textContent = project.name;
+                projectSelect.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao carregar projetos:', error);
+    }
+}
