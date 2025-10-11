@@ -53,11 +53,21 @@ function displayCADFiles() {
                 </span>
             </td>
             <td>
-                <button onclick="viewCADFile('${file._id}')" class="btn btn-sm btn-primary">Ver</button>
-                <button onclick="downloadCADFile('${file._id}')" class="btn btn-sm btn-success">Download</button>
-                <button onclick="deleteCADFile('${file._id}')" class="btn btn-sm btn-danger">Excluir</button>
+                <button class="btn btn-sm btn-primary view-file-btn" data-file-id="${file._id}">Ver</button>
+                <button class="btn btn-sm btn-success download-file-btn" data-file-id="${file._id}">Download</button>
+                <button class="btn btn-sm btn-danger delete-file-btn" data-file-id="${file._id}">Excluir</button>
             </td>
         `;
+        
+        // Add event listeners to buttons in this row
+        const viewBtn = row.querySelector('.view-file-btn');
+        const downloadBtn = row.querySelector('.download-file-btn');
+        const deleteBtn = row.querySelector('.delete-file-btn');
+        
+        viewBtn.addEventListener('click', () => viewCADFile(file._id));
+        downloadBtn.addEventListener('click', () => downloadCADFile(file._id));
+        deleteBtn.addEventListener('click', () => deleteCADFile(file._id));
+        
         tableBody.appendChild(row);
     });
 }
@@ -68,6 +78,9 @@ function showUploadCADForm() {
     loadBudgetsForCAD();
     showSection('cad-upload-section');
 }
+
+// Expose globally immediately
+window.showUploadCADForm = showUploadCADForm;
 
 // Load projects for CAD upload form
 async function loadProjectsForCAD() {
@@ -215,11 +228,17 @@ function viewCADFile(fileId) {
     alert('Funcionalidade de visualização será implementada em breve');
 }
 
+// Expose globally immediately
+window.viewCADFile = viewCADFile;
+
 // Download CAD file
 function downloadCADFile(fileId) {
     const token = localStorage.getItem('token');
     window.open(`/api/files/${fileId}/download?token=${token}`, '_blank');
 }
+
+// Expose globally immediately
+window.downloadCADFile = downloadCADFile;
 
 // Delete CAD file
 async function deleteCADFile(fileId) {
@@ -247,6 +266,9 @@ async function deleteCADFile(fileId) {
     }
 }
 
+// Expose globally immediately
+window.deleteCADFile = deleteCADFile;
+
 // Cancel upload form
 document.getElementById('cancel-upload-btn').addEventListener('click', () => {
     showSection('files-section');
@@ -263,3 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCADFiles();
     }
 });
+
+// Additional global exposures
+window.loadCADFiles = loadCADFiles;
