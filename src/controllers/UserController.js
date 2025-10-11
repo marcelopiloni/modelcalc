@@ -58,16 +58,23 @@ class UserController {
     async login(req, res) {
         try {
             const { email, password } = req.body;
+            console.log('🔐 Tentativa de login:', { email, passwordLength: password?.length });
 
             // Encontrar usuário
             const user = await User.findOne({ email });
             if (!user) {
+                console.log('❌ Usuário não encontrado:', email);
                 return res.status(401).json({ message: 'Credenciais inválidas' });
             }
 
+            console.log('✓ Usuário encontrado:', { email: user.email, role: user.role, approved: user.approved });
+
             // Verificar senha
             const isMatch = await user.comparePassword(password);
+            console.log('🔑 Comparação de senha:', { isMatch, passwordProvided: password.substring(0, 3) + '***' });
+            
             if (!isMatch) {
+                console.log('❌ Senha incorreta');
                 return res.status(401).json({ message: 'Credenciais inválidas' });
             }
 

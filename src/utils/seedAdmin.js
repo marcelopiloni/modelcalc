@@ -1,4 +1,3 @@
-const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
 /**
@@ -19,14 +18,11 @@ async function seedAdmin() {
             return;
         }
 
-        // Criar hash da senha padrão
-        const hashedPassword = await bcrypt.hash('Admin@123', 10);
-
-        // Criar usuário admin
+        // Criar usuário admin (o hash será feito automaticamente pelo pre-save hook)
         const admin = new User({
             name: 'Administrador',
             email: 'admin@modelcalc.com',
-            password: hashedPassword,
+            password: 'Admin@123', // Senha em texto plano - será hasheada pelo modelo
             company: 'ModelCalc',
             userType: 'supplier',
             role: 'admin',

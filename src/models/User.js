@@ -70,8 +70,16 @@ userSchema.pre('save', async function(next) {
 // Method to compare password for login
 userSchema.methods.comparePassword = async function(candidatePassword) {
     try {
-        return await bcrypt.compare(candidatePassword, this.password);
+        console.log('🔍 Comparando senhas:', {
+            candidatePassword: candidatePassword.substring(0, 3) + '***',
+            hashedPassword: this.password.substring(0, 10) + '...',
+            hashLength: this.password.length
+        });
+        const result = await bcrypt.compare(candidatePassword, this.password);
+        console.log('📊 Resultado da comparação:', result);
+        return result;
     } catch (error) {
+        console.error('❌ Erro ao comparar senha:', error);
         throw error;
     }
 };
