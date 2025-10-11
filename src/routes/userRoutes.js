@@ -3,7 +3,7 @@ const router = express.Router();
 const UserController = require('../controllers/UserController');
 const auth = require('../middleware/auth');
 const { body } = require('express-validator');
-const validation = require('../middleware/validation');
+const { validateRequest } = require('../middleware/validation');
 
 // Validação para registro de usuário
 const registerValidation = [
@@ -21,8 +21,8 @@ const loginValidation = [
 ];
 
 // Rotas públicas
-router.post('/register', registerValidation, validation, UserController.register);
-router.post('/login', loginValidation, validation, UserController.login);
+router.post('/register', registerValidation, validateRequest, UserController.register);
+router.post('/login', loginValidation, validateRequest, UserController.login);
 
 // Rotas protegidas
 router.get('/', auth, UserController.getUsers);
