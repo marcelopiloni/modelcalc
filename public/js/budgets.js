@@ -230,7 +230,7 @@ const budgets = {
 
     downloadExcel(id) {
         const token = auth.token;
-        window.open(`/api/budgets/${id}/excel?token=${token}`, '_blank');
+        window.open(`/api/budgets/${id}/download/excel?token=${token}`, '_blank');
     }
 };
 

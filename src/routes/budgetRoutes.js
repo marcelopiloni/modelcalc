@@ -3,12 +3,13 @@ const router = express.Router();
 const BudgetController = require('../controllers/BudgetController');
 const { validateBudget, validateMaterial, validateProcess } = require('../middleware/validation');
 const auth = require('../middleware/auth');
+const downloadAuth = require('../middleware/downloadAuth');
 
 // Budget CRUD routes
 router.post('/', auth, validateBudget, BudgetController.createBudget.bind(BudgetController));
 router.get('/', auth, BudgetController.getAllBudgets.bind(BudgetController));
 router.get('/:id', auth, BudgetController.getBudgetById.bind(BudgetController));
-router.get('/:id/download/excel', auth, BudgetController.downloadBudgetExcel.bind(BudgetController));
+router.get('/:id/download/excel', downloadAuth, BudgetController.downloadBudgetExcel.bind(BudgetController));
 router.put('/:id', auth, BudgetController.updateBudget.bind(BudgetController));
 router.delete('/:id', auth, BudgetController.deleteBudget.bind(BudgetController));
 
