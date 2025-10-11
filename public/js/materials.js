@@ -57,10 +57,17 @@ function displayMaterials() {
             <td>${material.unit || 'Unidade'}</td>
             <td>R$ ${(material.unitCost || 0).toFixed(2)}</td>
             <td>
-                <button onclick="editMaterial('${material._id}')" class="btn btn-sm btn-primary">Editar</button>
-                <button onclick="deleteMaterial('${material._id}')" class="btn btn-sm btn-danger">Excluir</button>
+                <button class="btn btn-sm btn-primary edit-material-btn" data-material-id="${material._id}">Editar</button>
+                <button class="btn btn-sm btn-danger delete-material-btn" data-material-id="${material._id}">Excluir</button>
             </td>
         `;
+        
+        // Add event listeners to buttons in this row
+        const editBtn = row.querySelector('.edit-material-btn');
+        const deleteBtn = row.querySelector('.delete-material-btn');
+        
+        editBtn.addEventListener('click', () => editMaterial(material._id));
+        deleteBtn.addEventListener('click', () => deleteMaterial(material._id));
         tableBody.appendChild(row);
     });
 }
@@ -79,25 +86,59 @@ function showNewMaterial() {
     showSection('material-form-section');
 }
 
-// Edit material
+// Expose globally immediately
+window.showNewMaterial = showNewMaterial;
+
+// Edit material  
 function editMaterial(materialId) {
-    const material = currentMaterials.find(m => m._id === materialId);
-    if (!material) return;
+    console.log('editMaterial called with ID:', materialId);
     
-    document.getElementById('material-form-title').textContent = 'Editar Material';
-    document.getElementById('material-id').value = material._id;
-    document.getElementById('material-name').value = material.name;
-    document.getElementById('material-description').value = material.description;
-    document.getElementById('material-category').value = material.category;
-    document.getElementById('material-unit').value = material.unit;
-    document.getElementById('material-unit-cost').value = material.unitCost;
-    document.getElementById('material-supplier').value = material.supplier || '';
+    const material = currentMaterials.find(m => m._id === materialId);
+    if (!material) {
+        console.error('Material not found:', materialId);
+        alert('Material não encontrado!');
+        return;
+    }
+    
+    // Check if elements exist
+    const elements = {
+        title: document.getElementById('material-form-title'),
+        id: document.getElementById('material-id'),
+        name: document.getElementById('material-name'),
+        description: document.getElementById('material-description'),
+        category: document.getElementById('material-category'),
+        unit: document.getElementById('material-unit'),
+        unitCost: document.getElementById('material-unit-cost'),
+        supplier: document.getElementById('material-supplier')
+    };
+    
+    for (const [key, element] of Object.entries(elements)) {
+        if (!element) {
+            console.error(`Element ${key} not found in DOM`);
+            alert(`Elemento ${key} não encontrado na página!`);
+            return;
+        }
+    }
+    
+    elements.title.textContent = 'Editar Material';
+    elements.id.value = material._id;
+    elements.name.value = material.name;
+    elements.description.value = material.description;
+    elements.category.value = material.category;
+    elements.unit.value = material.unit;
+    elements.unitCost.value = material.unitCost;
+    elements.supplier.value = material.supplier || '';
     
     showSection('material-form-section');
 }
 
+// Expose globally immediately
+window.editMaterial = editMaterial;
+
 // Delete material
 async function deleteMaterial(materialId) {
+    console.log('deleteMaterial called with ID:', materialId);
+    
     if (!confirm('Tem certeza que deseja excluir este material?')) {
         return;
     }
@@ -121,6 +162,9 @@ async function deleteMaterial(materialId) {
         alert('Erro ao excluir material');
     }
 }
+
+// Expose globally immediately
+window.deleteMaterial = deleteMaterial;
 
 // Handle material form submit
 document.getElementById('material-form').addEventListener('submit', async (e) => {
@@ -174,7 +218,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Expose functions globally for onclick handlers
-window.editMaterial = editMaterial;
-window.deleteMaterial = deleteMaterial;
-window.showNewMaterial = showNewMaterial;
+// Additional global exposures
+window.loadMaterials = loadMaterials;
