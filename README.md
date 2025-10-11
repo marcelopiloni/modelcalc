@@ -607,18 +607,204 @@ cd modelcalc
 - [ ] Dashboard com gráficos (Chart.js)- **Heroku/Railway** - Deploy (configurável)
 
 - [ ] Histórico de versões de orçamentos
+- [ ] Comparação de orçamentos
 
-- [ ] Comparação de orçamentos## 🔒 Segurança
+## �️ Sistema RBAC (Role-Based Access Control)
 
+O ModelCalc implementa um sistema completo de controle de acesso baseado em funções com três níveis de permissão:
 
+### 👥 Funções Disponíveis
 
-### 💡 Funcionalidades Futuras- Autenticação JWT com tokens seguros
+#### 🔷 **Gerente (Manager)**
+**Acesso Total** - Controle completo do sistema
 
-- [ ] Integração com sistemas ERP- Criptografia de senhas com bcrypt
+**Permissões:**
+- ✅ Visualizar **todos** os orçamentos, projetos e arquivos CAD (de todos os usuários)
+- ✅ Criar, editar e excluir orçamentos
+- ✅ Criar, editar e excluir projetos
+- ✅ Criar, editar e excluir materiais
+- ✅ Upload e gerenciamento de arquivos CAD
+- ✅ **Aprovar/rejeitar novos usuários** (operadores e gerentes)
+- ✅ **Gerenciar todos os usuários** (alterar funções, ativar/desativar contas)
+- ✅ Acesso ao painel de gerenciamento de usuários
+- ✅ Exportar relatórios (Excel/PDF)
 
-- [ ] App mobile (React Native)- Validação de dados de entrada
+**Criação:** Apenas administradores do sistema podem criar gerentes (via banco de dados)
 
-- [ ] Sistema de aprovações workflow- Controle de acesso baseado em roles
+#### � **Operador (Operator)**
+**Acesso Operacional** - Pode criar e gerenciar recursos
+
+**Permissões:**
+- ✅ Visualizar **apenas seus próprios** orçamentos e arquivos CAD criados
+- ✅ Criar, editar e excluir orçamentos (apenas os seus)
+- ✅ Criar, editar e excluir projetos
+- ✅ Criar, editar e excluir materiais
+- ✅ Upload e gerenciamento de arquivos CAD (apenas os seus)
+- ✅ Exportar relatórios (Excel/PDF) dos seus orçamentos
+- ❌ Não pode aprovar usuários
+- ❌ Não pode visualizar dados de outros operadores
+- ❌ Não tem acesso ao painel de gerenciamento de usuários
+
+**Criação:** Requer **aprovação do gerente** após registro
+
+#### 🔵 **Cliente (Client)**
+**Acesso Limitado** - Pode solicitar orçamentos e fazer upload de arquivos
+
+**Permissões:**
+- ✅ Visualizar **apenas seus próprios** orçamentos
+- ✅ Upload de arquivos CAD
+- ✅ Solicitar novos orçamentos (mas não criar diretamente)
+- ✅ Visualizar seus arquivos CAD enviados
+- ✅ Baixar relatórios (Excel/PDF) dos seus orçamentos
+- ❌ Não pode criar orçamentos diretamente
+- ❌ Não pode criar/editar projetos
+- ❌ Não pode criar/editar materiais
+- ❌ Não pode excluir recursos
+- ❌ Não pode visualizar dados de outros usuários
+
+**Criação:** Aprovação **automática** após registro
+
+### 🔄 Fluxo de Aprovação
+
+1. **Registro de Novo Usuário**
+   - Usuário acessa a tela de registro
+   - Preenche dados pessoais (nome, email, senha, empresa)
+   - Seleciona tipo de usuário (Cliente/Fornecedor)
+   - **Seleciona função**: Cliente ou Operador
+   - Sistema cria conta com status baseado na função
+
+2. **Aprovação Automática (Clientes)**
+   - Clientes são aprovados automaticamente
+   - Podem fazer login imediatamente
+   - Acesso limitado conforme permissões
+
+3. **Aprovação Manual (Operadores)**
+   - Operador registra-se mas fica com status `approved: false`
+   - Não consegue fazer login até ser aprovado
+   - Mensagem exibida: "Aguardando aprovação do gerente"
+
+4. **Painel do Gerente**
+   - Gerente acessa "Usuários" no menu de navegação
+   - Visualiza cards de usuários pendentes
+   - Para cada usuário pendente:
+     - Visualiza informações (nome, email, empresa, tipo)
+     - Pode alterar a função antes de aprovar
+     - Clica em "Aprovar" ou "Rejeitar"
+   - Sistema registra quem aprovou e quando
+
+5. **Pós-Aprovação**
+   - Operador aprovado pode fazer login
+   - Sistema exibe badge da função no header
+   - Acesso liberado conforme permissões da função
+
+### 🎯 Interface RBAC
+
+#### 🏠 **Dashboard**
+- **Gerentes**: Visualizam estatísticas de todos os dados
+- **Operadores**: Visualizam apenas estatísticas dos seus dados
+- **Clientes**: Visualizam apenas seus orçamentos e arquivos
+- Botões de ação aparecem/desaparecem baseado na função
+
+#### 🧭 **Navegação**
+- Link "Usuários" visível **apenas para gerentes**
+- Badge colorido mostra a função atual do usuário:
+  - 🟣 Roxo = Gerente
+  - 🔴 Rosa = Operador
+  - 🔵 Azul = Cliente
+
+#### 🔐 **Autenticação**
+- Mensagem "Aguardando Aprovação" para operadores não aprovados
+- Logout automático se conta for desativada
+- Token JWT inclui informações de função e status de aprovação
+
+### 🛠️ Gerenciamento de Usuários (Gerentes)
+
+O painel de gerenciamento permite:
+
+**1. Usuários Pendentes**
+- Cards visuais com informações do usuário
+- Dropdown para alterar função antes da aprovação
+- Botões "Aprovar" e "Rejeitar"
+- Contador de usuários pendentes
+
+**2. Todos os Usuários**
+- Tabela completa com:
+  - Nome, email, empresa
+  - Tipo de usuário (Cliente/Fornecedor)
+  - Função RBAC (com badge colorido)
+  - Status (Ativo/Inativo/Pendente)
+  - Data de cadastro
+- Ações disponíveis:
+  - Alterar função (dropdown)
+  - Ativar/Desativar conta
+
+### 🔧 Implementação Técnica
+
+**Backend:**
+- `src/middleware/rbac.js` - Middleware de controle de acesso
+- `src/models/User.js` - Campos: role, approved, approvedBy, approvedAt
+- `src/controllers/UserController.js` - Métodos de aprovação e gerenciamento
+- Filtros automáticos em controllers (Budget, File) baseados em função
+
+**Frontend:**
+- `public/js/auth.js` - Funções: isManager(), isOperator(), isClient(), isApproved()
+- `public/js/userManagement.js` - Painel de gerenciamento completo
+- `public/js/app.js` - Lógica de UI condicional
+- `public/css/styles.css` - Estilos de badges e cards RBAC
+
+**Rotas Protegidas:**
+```javascript
+// Orçamentos
+GET    /api/budgets         - Autenticado (filtra por função)
+POST   /api/budgets         - Gerente ou Operador
+PUT    /api/budgets/:id     - Gerente ou Operador (dono)
+DELETE /api/budgets/:id     - Gerente ou Operador (dono)
+
+// Gerenciamento de usuários
+GET    /api/users/pending   - Apenas Gerente
+PATCH  /api/users/:id/approve - Apenas Gerente
+PATCH  /api/users/:id/role   - Apenas Gerente
+PATCH  /api/users/:id/toggle-status - Apenas Gerente
+```
+
+### 📋 Cenários de Uso
+
+**Cenário 1: Novo Operador**
+1. João se registra como Operador
+2. Sistema exibe: "Aguardando aprovação"
+3. Gerente Maria acessa painel de usuários
+4. Maria revisa dados de João e aprova
+5. João pode fazer login e criar orçamentos
+
+**Cenário 2: Cliente Solicita Orçamento**
+1. Cliente Carlos faz upload de arquivo CAD
+2. Sistema analisa arquivo automaticamente
+3. Carlos visualiza análise mas não pode criar orçamento
+4. Operador João cria orçamento para Carlos
+5. Carlos visualiza orçamento na sua área
+
+**Cenário 3: Gerente Auditoria**
+1. Gerente Maria acessa dashboard
+2. Visualiza TODOS os orçamentos (de todos operadores)
+3. Pode editar qualquer orçamento se necessário
+4. Exporta relatório consolidado
+
+## 🔒 Segurança
+
+- Autenticação JWT com tokens seguros incluindo informações de função
+- Criptografia de senhas com bcrypt
+- Validação de dados de entrada
+- **Controle de acesso RBAC em todas as rotas**
+- **Filtragem automática de dados por função no backend**
+- Upload seguro de arquivos com validação de tipo
+- Sanitização de dados para prevenir injeções
+- **Proteção contra escalação de privilégios**
+
+### 💡 Funcionalidades Futuras
+- [ ] Integração com sistemas ERP
+- [ ] App mobile (React Native)
+- [ ] Sistema de aprovações workflow
+- [ ] Integração com sistemas de pagamento
 
 - [ ] Integração com sistemas de pagamento- Upload seguro de arquivos com validação de tipo
 
@@ -657,10 +843,14 @@ O sistema analisa arquivos CAD automaticamente e extrai:- [x] CRUD de projetos, 
 - Downloads autenticados e seguros- [x] Integração com MongoDB Atlas
 
 - Nomes de arquivo com identificação única- [x] Sistema de roles (Cliente/Fornecedor)
+- [x] **Sistema RBAC completo (Gerente/Operador/Cliente)**
+- [x] **Painel de aprovação de usuários para gerentes**
+- [x] **Controle de acesso granular por função**
+- [x] **Filtragem automática de dados por permissão**
 
+### 🔗 Integração Inteligente
 
-
-### 🔗 Integração Inteligente### 🚧 Em Desenvolvimento
+### 🚧 Em Desenvolvimento
 
 - Vinculação de arquivos CAD com orçamentos- [ ] Sistema de notificações por email
 
