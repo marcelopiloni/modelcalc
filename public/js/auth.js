@@ -75,6 +75,41 @@ const auth = {
         return this.user?.userType === 'supplier';
     },
 
+    // ========== MÉTODOS RBAC ==========
+    
+    isManager() {
+        return this.user?.role === 'manager';
+    },
+
+    isOperator() {
+        return this.user?.role === 'operator';
+    },
+
+    isClient() {
+        return this.user?.role === 'client';
+    },
+
+    isManagerOrOperator() {
+        return this.isManager() || this.isOperator();
+    },
+
+    isApproved() {
+        return this.user?.approved === true;
+    },
+
+    getRole() {
+        return this.user?.role || 'client';
+    },
+
+    getRoleName() {
+        const roleNames = {
+            'manager': 'Gerente',
+            'operator': 'Operador',
+            'client': 'Cliente'
+        };
+        return roleNames[this.getRole()] || 'Usuário';
+    },
+
     getHeaders() {
         return {
             'Content-Type': 'application/json',
