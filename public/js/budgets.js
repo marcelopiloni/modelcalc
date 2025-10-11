@@ -92,13 +92,14 @@ const budgets = {
                 headers: auth.getHeaders()
             });
 
-            const data = await response.json();
+            const result = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.message || 'Erro ao listar orçamentos');
+                throw new Error(result.message || 'Erro ao listar orçamentos');
             }
 
-            return data.data;
+            // Tratar diferentes formatos de resposta
+            return result.data || result || [];
         } catch (error) {
             console.error('Erro ao listar orçamentos:', error);
             throw error;

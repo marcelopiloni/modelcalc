@@ -65,15 +65,30 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const budgetsList = await budgets.list();
             const tbody = document.getElementById('budgets-table-body');
+            
+            if (!tbody) {
+                console.error('Elemento budgets-table-body não encontrado');
+                return;
+            }
+            
             tbody.innerHTML = '';
+
+            if (!budgetsList || budgetsList.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="5" class="text-center">Nenhum orçamento encontrado</td>
+                `;
+                tbody.appendChild(tr);
+                return;
+            }
 
             budgetsList.forEach(budget => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${budget.clientId.name}</td>
-                    <td>${budget.projectId.name}</td>
-                    <td>R$ ${budget.finalPrice.toFixed(2)}</td>
-                    <td>${budget.status}</td>
+                    <td>${budget.clientId?.name || 'Cliente não informado'}</td>
+                    <td>${budget.projectId?.name || 'Projeto não informado'}</td>
+                    <td>R$ ${(budget.finalPrice || 0).toFixed(2)}</td>
+                    <td>${budget.status || 'Status não definido'}</td>
                     <td>
                         <button class="btn btn-primary btn-sm" onclick="viewBudget('${budget._id}')">Ver</button>
                         ${auth.isSupplier() ? `
@@ -85,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(tr);
             });
         } catch (error) {
-            showAlert(error.message);
+            console.error('Erro ao carregar orçamentos:', error);
+            showAlert(error.message || 'Erro ao carregar orçamentos');
         }
     }
 
