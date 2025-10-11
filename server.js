@@ -21,7 +21,13 @@ const PORT = process.env.PORT || 3000;
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/modelcalc')
-.then(() => console.log('📦 Conectado ao MongoDB'))
+.then(async () => {
+    console.log('📦 Conectado ao MongoDB');
+    
+    // Executar seed do admin
+    const seedAdmin = require('./src/utils/seedAdmin');
+    await seedAdmin();
+})
 .catch(err => {
     console.error('❌ Erro ao conectar ao MongoDB:', err);
     process.exit(1);

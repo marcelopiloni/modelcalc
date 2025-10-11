@@ -101,8 +101,17 @@ const auth = {
         return this.user?.role || 'client';
     },
 
+    isAdmin() {
+        return this.user?.role === 'admin';
+    },
+
+    isAdminOrManager() {
+        return this.user?.role === 'admin' || this.user?.role === 'manager';
+    },
+
     getRoleName() {
         const roleNames = {
+            'admin': 'Administrador',
             'manager': 'Gerente',
             'operator': 'Operador',
             'client': 'Cliente'

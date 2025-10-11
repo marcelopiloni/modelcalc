@@ -53,15 +53,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (link) link.classList.remove('hidden');
             });
             
-            // Ocultar link de usuários para não-gerentes
-            if (navLinks.users && !auth.isManager()) {
+            // Ocultar link de usuários para não-gerentes/admins
+            if (navLinks.users && !auth.isAdminOrManager()) {
                 navLinks.users.classList.add('hidden');
             }
             
             // Mostrar informações do usuário com badge de função
             const userInfoEl = document.getElementById('user-info');
             const roleName = auth.getRoleName();
-            const roleBadgeClass = auth.isManager() ? 'badge-manager' : 
+            const roleBadgeClass = auth.isAdmin() ? 'badge-admin' : 
+                                   auth.isManager() ? 'badge-manager' : 
                                    auth.isOperator() ? 'badge-operator' : 'badge-client';
             
             userInfoEl.innerHTML = `
@@ -121,11 +122,26 @@ document.addEventListener('DOMContentLoaded', () => {
     forms.register.addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
+            const password = document.getElementById('register-password').value;
+            const passwordConfirm = document.getElementById('register-password-confirm').value;
+            
+            // Validar se as senhas coincidem
+            if (password !== passwordConfirm) {
+                showAlert('As senhas não coincidem. Por favor, verifique e tente novamente.', 'error');
+                return;
+            }
+            
+            // Validar comprimento mínimo
+            if (password.length < 6) {
+                showAlert('A senha deve ter no mínimo 6 caracteres.', 'error');
+                return;
+            }
+            
             const role = document.getElementById('register-role').value;
             await auth.register({
                 name: document.getElementById('register-name').value,
                 email: document.getElementById('register-email').value,
-                password: document.getElementById('register-password').value,
+                password: password,
                 company: document.getElementById('register-company').value,
                 userType: document.getElementById('register-type').value,
                 role: role
@@ -637,9 +653,9 @@ document.getElementById('nav-home').addEventListener('click', () => {
     }
 });
 
-// Navigation for Users (Manager only)
+// Navigation for Users (Admin and Manager only)
 document.getElementById('nav-users').addEventListener('click', () => {
-    if (isAuthenticated() && auth.isManager()) {
+    if (isAuthenticated() && auth.isAdminOrManager()) {
         showSection('user-management-section');
         if (typeof showUserManagement === 'function') {
             showUserManagement();

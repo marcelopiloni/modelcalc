@@ -16,8 +16,8 @@ const checkRole = (allowedRoles) => {
                 });
             }
 
-            // Verifica se o usuário foi aprovado
-            if (!req.user.approved && req.user.role !== 'manager') {
+            // Verifica se o usuário foi aprovado (exceto admin)
+            if (!req.user.approved && req.user.role !== 'admin' && req.user.role !== 'manager') {
                 return res.status(403).json({
                     status: 'error',
                     message: 'Usuário aguardando aprovação do gerente'
@@ -44,19 +44,29 @@ const checkRole = (allowedRoles) => {
 };
 
 /**
+ * Middleware para verificar se o usuário é administrador
+ */
+const isAdmin = checkRole(['admin']);
+
+/**
+ * Middleware para verificar se o usuário é admin ou gerente
+ */
+const isAdminOrManager = checkRole(['admin', 'manager']);
+
+/**
  * Middleware para verificar se o usuário é gerente
  */
-const isManager = checkRole(['manager']);
+const isManager = checkRole(['admin', 'manager']);
 
 /**
  * Middleware para verificar se o usuário é gerente ou operador
  */
-const isManagerOrOperator = checkRole(['manager', 'operator']);
+const isManagerOrOperator = checkRole(['admin', 'manager', 'operator']);
 
 /**
  * Middleware para verificar se o usuário tem qualquer role autenticada
  */
-const isAuthenticated = checkRole(['manager', 'operator', 'client']);
+const isAuthenticated = checkRole(['admin', 'manager', 'operator', 'client']);
 
 /**
  * Middleware para verificar se usuário pode acessar recurso específico
@@ -74,8 +84,8 @@ const checkResourceAccess = (resourceOwnerField = 'uploadedBy') => {
                 });
             }
 
-            // Gerente tem acesso total
-            if (req.user.role === 'manager') {
+            // Admin e Gerente têm acesso total
+            if (req.user.role === 'admin' || req.user.role === 'manager') {
                 return next();
             }
 
@@ -94,6 +104,8 @@ const checkResourceAccess = (resourceOwnerField = 'uploadedBy') => {
 
 module.exports = {
     checkRole,
+    isAdmin,
+    isAdminOrManager,
     isManager,
     isManagerOrOperator,
     isAuthenticated,

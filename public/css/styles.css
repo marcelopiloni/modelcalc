@@ -757,6 +757,17 @@ input[type="file"]:hover {
 }
 
 /* Role Badges */
+.badge-admin {
+    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(255, 8, 68, 0.3);
+}
+
 .badge-manager {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
