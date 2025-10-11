@@ -155,6 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('budget-id').value = '';
         document.getElementById('budget-form-title').textContent = 'Novo Orçamento';
         
+        // Limpar materiais e processos existentes
+        clearBudgetItems();
+        
         // Carregar projetos no select
         await loadProjectsInSelect();
         
@@ -294,14 +297,26 @@ async function addMaterialRow() {
     }
     
     row.innerHTML = `
-        <select class="material-select" required style="flex: 2;" onchange="updateMaterialCost(this)">
+        <select class="material-select" required style="flex: 2;">
             ${materialOptions}
         </select>
         <input type="number" class="quantity-input" placeholder="Quantidade" min="0.01" step="0.01" required style="flex: 1;">
-        <input type="number" class="unit-cost-input" placeholder="Custo unitário" min="0" step="0.01" required style="flex: 1;" readonly>
+        <input type="number" class="unit-cost-input" placeholder="Custo unitário" min="0" step="0.01" required style="flex: 1;">
         <span class="unit-label" style="flex: 0.5; font-size: 0.9em;"></span>
-        <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding: 5px 10px;">X</button>
+        <button type="button" class="remove-material-btn btn btn-danger" style="padding: 5px 10px;">X</button>
     `;
+    
+    // Adicionar event listeners após criar o elemento
+    const materialSelect = row.querySelector('.material-select');
+    const removeBtn = row.querySelector('.remove-material-btn');
+    
+    materialSelect.addEventListener('change', function() {
+        updateMaterialCost(this);
+    });
+    
+    removeBtn.addEventListener('click', function() {
+        row.remove();
+    });
     
     container.appendChild(row);
 }
@@ -317,13 +332,37 @@ function updateMaterialCost(selectElement) {
         const costInput = row.querySelector('.unit-cost-input');
         const unitLabel = row.querySelector('.unit-label');
         
-        if (costInput) costInput.value = cost;
-        if (unitLabel) unitLabel.textContent = unit;
+        if (costInput && cost) {
+            costInput.value = parseFloat(cost).toFixed(2);
+        }
+        if (unitLabel && unit) {
+            unitLabel.textContent = unit;
+        }
+    } else {
+        // Limpar campos quando nenhum material for selecionado
+        const row = selectElement.parentElement;
+        const costInput = row.querySelector('.unit-cost-input');
+        const unitLabel = row.querySelector('.unit-label');
+        
+        if (costInput) costInput.value = '';
+        if (unitLabel) unitLabel.textContent = '';
     }
 }
 
 // Expor função globalmente
 window.updateMaterialCost = updateMaterialCost;
+
+// Função para limpar todos os materiais e processos
+function clearBudgetItems() {
+    const materialsContainer = document.getElementById('materials-list');
+    const processesContainer = document.getElementById('processes-list');
+    
+    if (materialsContainer) materialsContainer.innerHTML = '';
+    if (processesContainer) processesContainer.innerHTML = '';
+}
+
+// Expor função globalmente
+window.clearBudgetItems = clearBudgetItems;
 
 // Funções para gerenciar processos
 function addProcessRow() {
@@ -333,11 +372,17 @@ function addProcessRow() {
     row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
     
     row.innerHTML = `
-        <input type="text" placeholder="Nome do processo" required style="flex: 2;">
-        <input type="number" placeholder="Duração (horas)" min="0.1" step="0.1" required style="flex: 1;">
-        <input type="number" placeholder="Custo/hora" min="0" step="0.01" required style="flex: 1;">
-        <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding: 5px 10px;">X</button>
+        <input type="text" class="process-name" placeholder="Nome do processo" required style="flex: 2;">
+        <input type="number" class="process-duration" placeholder="Duração (horas)" min="0.1" step="0.1" required style="flex: 1;">
+        <input type="number" class="process-cost" placeholder="Custo/hora" min="0" step="0.01" required style="flex: 1;">
+        <button type="button" class="remove-process-btn btn btn-danger" style="padding: 5px 10px;">X</button>
     `;
+    
+    // Adicionar event listener para o botão de remoção
+    const removeBtn = row.querySelector('.remove-process-btn');
+    removeBtn.addEventListener('click', function() {
+        row.remove();
+    });
     
     container.appendChild(row);
 }
