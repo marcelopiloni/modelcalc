@@ -1,24 +1,46 @@
-// models/Material.js
-class Material {
-  constructor(data) {
-    this.id = data.id;
-    this.name = data.name;
-    this.density = data.density; // g/cm³
-    this.costPerKg = data.costPerKg;
-    this.createdAt = data.createdAt || new Date();
-    this.updatedAt = data.updatedAt || new Date();
-  }
+const mongoose = require('mongoose');
 
-  toJSON() {
-    return {
-      id: this.id,
-      name: this.name,
-      density: this.density,
-      costPerKg: this.costPerKg,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
-  }
-}
+const materialSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    unit: {
+        type: String,
+        required: true, // kg, m, m², unidade, etc.
+        default: 'unidade'
+    },
+    unitCost: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    supplier: {
+        type: String,
+        trim: true
+    },
+    category: {
+        type: String,
+        required: true,
+        enum: ['metal', 'plastico', 'eletronico', 'ferramenta', 'outro'],
+        default: 'outro'
+    },
+    active: {
+        type: Boolean,
+        default: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    }
+}, {
+    timestamps: true
+});
 
-module.exports = Material;
+module.exports = mongoose.model('Material', materialSchema);

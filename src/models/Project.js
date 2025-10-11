@@ -1,41 +1,32 @@
-class Project {
-  constructor(data) {
-    this.id = data.id;
-    this.name = data.name;
-    this.description = data.description;
-    this.clientName = data.clientName;
-    this.clientEmail = data.clientEmail;
-    this.status = data.status || 'active'; // active, completed, cancelled
-    this.budgets = data.budgets || [];
-    this.createdAt = data.createdAt || new Date();
-    this.updatedAt = data.updatedAt || new Date();
-  }
+const mongoose = require('mongoose');
 
-  addBudget(budgetId) {
-    this.budgets.push(budgetId);
-    this.updatedAt = new Date();
-  }
+const projectSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['active', 'completed', 'cancelled'],
+        default: 'active'
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    }
+}, {
+    timestamps: true
+});
 
-  removeBudget(budgetId) {
-    this.budgets = this.budgets.filter(id => id !== budgetId);
-    this.updatedAt = new Date();
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      name: this.name,
-      description: this.description,
-      client: {
-        name: this.clientName,
-        email: this.clientEmail
-      },
-      status: this.status,
-      budgets: this.budgets,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
-  }
-}
-
-module.exports = Project;
+module.exports = mongoose.model('Project', projectSchema);
