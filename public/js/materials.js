@@ -13,7 +13,9 @@ async function loadMaterials() {
         });
         
         if (response.ok) {
-            currentMaterials = await response.json();
+            const result = await response.json();
+            // Tratar diferentes formatos de resposta
+            currentMaterials = result.data || result || [];
             displayMaterials();
             updateMaterialSelectors();
         } else {
@@ -28,9 +30,15 @@ async function loadMaterials() {
 // Display materials in table
 function displayMaterials() {
     const tableBody = document.getElementById('materials-table-body');
+    
+    if (!tableBody) {
+        console.error('Elemento materials-table-body não encontrado');
+        return;
+    }
+    
     tableBody.innerHTML = '';
     
-    if (currentMaterials.length === 0) {
+    if (!currentMaterials || currentMaterials.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum material encontrado</td></tr>';
         return;
     }
@@ -38,11 +46,11 @@ function displayMaterials() {
     currentMaterials.forEach(material => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${material.name}</td>
-            <td>${material.description}</td>
-            <td>${material.category}</td>
-            <td>${material.unit}</td>
-            <td>R$ ${material.unitCost.toFixed(2)}</td>
+            <td>${material.name || 'Nome não informado'}</td>
+            <td>${material.description || 'Sem descrição'}</td>
+            <td>${material.category || 'Sem categoria'}</td>
+            <td>${material.unit || 'Unidade'}</td>
+            <td>R$ ${(material.unitCost || 0).toFixed(2)}</td>
             <td>
                 <button onclick="editMaterial('${material._id}')" class="btn btn-sm btn-primary">Editar</button>
                 <button onclick="deleteMaterial('${material._id}')" class="btn btn-sm btn-danger">Excluir</button>
