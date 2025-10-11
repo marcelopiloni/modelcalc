@@ -190,32 +190,48 @@ function setupDashboardEventListeners() {
         });
     }
     
-    // Quick action buttons
+    // Quick action buttons - Conditional based on RBAC
     const newBudgetBtn = document.getElementById('new-budget-dashboard-btn');
     const newProjectBtn = document.getElementById('new-project-dashboard-btn');
     const newMaterialBtn = document.getElementById('new-material-dashboard-btn');
     const uploadCADBtn = document.getElementById('upload-cad-dashboard-btn');
     
+    // Only managers and operators can create budgets
     if (newBudgetBtn) {
-        newBudgetBtn.addEventListener('click', () => {
-            showSection('budget-form-section');
-            loadProjectsInSelect();
-            loadMaterialsForBudget();
-        });
+        if (auth.isManagerOrOperator()) {
+            newBudgetBtn.addEventListener('click', () => {
+                showSection('budget-form-section');
+                loadProjectsInSelect();
+                loadMaterialsForBudget();
+            });
+        } else {
+            newBudgetBtn.style.display = 'none';
+        }
     }
     
+    // Only managers and operators can create projects
     if (newProjectBtn) {
-        newProjectBtn.addEventListener('click', () => {
-            showNewProject();
-        });
+        if (auth.isManagerOrOperator()) {
+            newProjectBtn.addEventListener('click', () => {
+                showNewProject();
+            });
+        } else {
+            newProjectBtn.style.display = 'none';
+        }
     }
     
+    // Only managers and operators can create materials
     if (newMaterialBtn) {
-        newMaterialBtn.addEventListener('click', () => {
-            showNewMaterial();
-        });
+        if (auth.isManagerOrOperator()) {
+            newMaterialBtn.addEventListener('click', () => {
+                showNewMaterial();
+            });
+        } else {
+            newMaterialBtn.style.display = 'none';
+        }
     }
     
+    // All authenticated users can upload CAD files
     if (uploadCADBtn) {
         uploadCADBtn.addEventListener('click', () => {
             showUploadCADForm();
