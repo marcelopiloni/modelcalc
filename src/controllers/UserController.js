@@ -71,8 +71,8 @@ class UserController {
                 return res.status(401).json({ message: 'Credenciais inválidas' });
             }
 
-            // Verificar se usuário foi aprovado
-            if (!user.approved && user.role !== 'client') {
+            // Verificar se usuário foi aprovado (exceto admin e client)
+            if (!user.approved && user.role !== 'client' && user.role !== 'admin') {
                 return res.status(403).json({ 
                     message: 'Sua conta está aguardando aprovação do gerente',
                     approved: false
