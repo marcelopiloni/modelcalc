@@ -1,4 +1,5 @@
 const CADFile = require('../models/CADFileMongo');
+const CADAnalyzer = require('../utils/cadAnalyzer');
 const path = require('path');
 const fs = require('fs-extra');
 
@@ -43,10 +44,10 @@ class FileController {
       const cadFile = new CADFile(cadFileData);
       await cadFile.save();
 
-      // Simulate CAD file analysis (aqui você integraria com biblioteca de análise CAD)
-      setTimeout(() => {
-        this.simulateCADAnalysis(cadFile._id);
-      }, 1000);
+      // Analyze CAD file in background
+      setImmediate(() => {
+        this.analyzeCADFile(cadFile._id, cadFile.path, cadFile.format);
+      });
 
       res.status(201).json({
         status: 'success',
@@ -209,29 +210,46 @@ class FileController {
     }
   }
 
-  // Simulate CAD file analysis (replace with real CAD analysis library)
-  async simulateCADAnalysis(fileId) {
+  // Analyze CAD file using real CAD analyzer
+  async analyzeCADFile(fileId, filePath, format) {
     try {
       const cadFile = await CADFile.findById(fileId);
       if (!cadFile) return;
 
-      const analysisData = {
-        volume: Math.random() * 1000 + 50, // cm³
-        surfaceArea: Math.random() * 500 + 100, // cm²
-        complexity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
-        estimatedMachiningTime: Math.random() * 8 + 1, // hours
-        suggestedMaterials: ['Alumínio 6061', 'Aço Carbono', 'Aço Inox 316'],
-        manufacturingProcesses: ['Usinagem CNC', 'Torneamento', 'Fresamento']
-      };
+      const analyzer = new CADAnalyzer();
+      const analysisResult = await analyzer.analyzeFile(filePath, format);
 
       await CADFile.findByIdAndUpdate(fileId, { 
-        processed: true, 
-        analysis: analysisData 
+        processed: analysisResult.processed, 
+        analysis: {
+          volume: analysisResult.volume,
+          surfaceArea: analysisResult.surfaceArea,
+          complexity: analysisResult.complexity,
+          estimatedMachiningTime: analysisResult.estimatedMachiningTime,
+          suggestedMaterials: analysisResult.suggestedMaterials,
+          manufacturingProcesses: analysisResult.manufacturingProcesses
+        }
       });
       
       console.log(`✅ Análise CAD concluída para arquivo: ${cadFile.originalName}`);
+      console.log(`   Volume estimado: ${analysisResult.volume} cm³`);
+      console.log(`   Complexidade: ${analysisResult.complexity}`);
+      console.log(`   Tempo estimado: ${analysisResult.estimatedMachiningTime}h`);
     } catch (error) {
-      console.error('Erro na simulação de análise CAD:', error);
+      console.error('Erro na análise CAD:', error);
+      
+      // Fallback to default values if analysis fails
+      await CADFile.findByIdAndUpdate(fileId, { 
+        processed: false, 
+        analysis: {
+          volume: 50,
+          surfaceArea: 0,
+          complexity: 'medium',
+          estimatedMachiningTime: 2.5,
+          suggestedMaterials: ['Alumínio 6061', 'Aço 1020'],
+          manufacturingProcesses: ['Fresamento CNC', 'Torneamento']
+        }
+      });
     }
   }
 }
