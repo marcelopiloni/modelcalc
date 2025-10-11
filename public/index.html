@@ -73,6 +73,88 @@
             </form>
         </div>
 
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="hidden">
+            <div class="dashboard-header mb-4">
+                <h2>Dashboard - ModelCalc</h2>
+                <p class="text-muted">Bem-vindo(a) ao seu painel de controle</p>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3 id="total-projects">0</h3>
+                        <p>Projetos Ativos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <h3 id="total-budgets">0</h3>
+                        <p>Orçamentos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔧</div>
+                    <div class="stat-content">
+                        <h3 id="total-materials">0</h3>
+                        <p>Materiais</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📁</div>
+                    <div class="stat-content">
+                        <h3 id="total-files">0</h3>
+                        <p>Arquivos CAD</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Orçamentos Recentes</h3>
+                    <div id="recent-budgets" class="recent-list">
+                        <p class="text-muted">Carregando...</p>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-sm" id="view-all-budgets-btn">Ver Todos</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Projetos em Andamento</h3>
+                    <div id="active-projects" class="recent-list">
+                        <p class="text-muted">Carregando...</p>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-sm" id="view-all-projects-btn">Ver Todos</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions mb-4">
+                <h3>Ações Rápidas</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="new-budget-dashboard-btn">
+                        <span>➕</span> Novo Orçamento
+                    </button>
+                    <button class="btn btn-primary" id="new-project-dashboard-btn">
+                        <span>🏗️</span> Novo Projeto
+                    </button>
+                    <button class="btn btn-info" id="new-material-dashboard-btn">
+                        <span>🔧</span> Novo Material
+                    </button>
+                    <button class="btn btn-warning" id="upload-cad-dashboard-btn">
+                        <span>📁</span> Upload CAD
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Projects List -->
         <div id="projects-section" class="hidden">
             <div class="card mb-3">
@@ -162,6 +244,18 @@
                     <h3>Processos</h3>
                     <div id="processes-list"></div>
                     <button type="button" class="btn btn-primary" id="add-process-btn">Adicionar Processo</button>
+                </div>
+
+                <!-- CAD Files Section -->
+                <div class="card mb-3">
+                    <h3>Arquivos CAD</h3>
+                    <div id="cad-files-list">
+                        <p class="text-muted">Nenhum arquivo selecionado</p>
+                    </div>
+                    <button type="button" class="btn btn-info" id="select-cad-files-btn">Selecionar Arquivos CAD</button>
+                    <button type="button" class="btn btn-secondary" id="auto-fill-from-cad-btn" disabled>
+                        🤖 Auto-completar com dados do CAD
+                    </button>
                 </div>
 
                 <!-- Labor Cost -->
@@ -320,11 +414,53 @@
         </div>
     </main>
 
+    <!-- Modal for CAD File Selection -->
+    <div id="cad-files-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Selecionar Arquivos CAD</h3>
+                <button type="button" class="modal-close" id="close-cad-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Selecione os arquivos CAD que serão usados neste orçamento:</p>
+                <div id="available-cad-files" class="cad-files-grid">
+                    <p class="text-muted">Carregando arquivos...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-cad-selection">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirm-cad-selection">Confirmar Seleção</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/auth.js"></script>
     <script src="js/budgets.js"></script>
     <script src="js/projects.js"></script>
     <script src="js/materials.js"></script>
     <script src="js/files.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/cadIntegration.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- Debug script to verify functions are loaded -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug: Check if functions are properly loaded
+            setTimeout(function() {
+                console.log('=== Debug: Checking global functions ===');
+                console.log('editMaterial:', typeof window.editMaterial);
+                console.log('deleteMaterial:', typeof window.deleteMaterial);
+                console.log('showNewMaterial:', typeof window.showNewMaterial);
+                console.log('editProject:', typeof window.editProject);
+                console.log('deleteProject:', typeof window.deleteProject);
+                console.log('showNewProject:', typeof window.showNewProject);
+                console.log('viewCADFile:', typeof window.viewCADFile);
+                console.log('downloadCADFile:', typeof window.downloadCADFile);
+                console.log('deleteCADFile:', typeof window.deleteCADFile);
+                console.log('showUploadCADForm:', typeof window.showUploadCADForm);
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
