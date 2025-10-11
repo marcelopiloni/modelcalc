@@ -17,6 +17,7 @@
                 <a href="#" id="nav-budgets" class="hidden">Orçamentos</a>
                 <a href="#" id="nav-materials" class="hidden">Materiais</a>
                 <a href="#" id="nav-files" class="hidden">Arquivos CAD</a>
+                <a href="#" id="nav-users" class="hidden">Usuários</a>
                 <a href="#" id="nav-logout" class="hidden">Sair</a>
                 <span id="user-info" class="hidden"></span>
             </div>
@@ -67,6 +68,16 @@
                         <option value="client">Cliente</option>
                         <option value="supplier">Fornecedor</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="register-role">Função no Sistema:</label>
+                    <select id="register-role" required>
+                        <option value="client">Cliente (Aprovação automática)</option>
+                        <option value="operator">Operador (Requer aprovação do gerente)</option>
+                    </select>
+                    <small class="form-text text-muted">
+                        Operadores podem criar orçamentos e gerenciar arquivos. Clientes podem solicitar orçamentos.
+                    </small>
                 </div>
                 <button type="submit" class="btn btn-primary">Registrar</button>
                 <p class="mb-2">Já tem conta? <a href="#" id="show-login">Faça login</a></p>
@@ -151,6 +162,53 @@
                     <button class="btn btn-warning" id="upload-cad-dashboard-btn">
                         <span>📁</span> Upload CAD
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section (Only for Managers) -->
+        <div id="user-management-section" class="hidden">
+            <div class="dashboard-header mb-4">
+                <h2>Gerenciamento de Usuários</h2>
+                <p class="text-muted">Aprovar e gerenciar usuários do sistema</p>
+            </div>
+
+            <!-- Pending Users Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Usuários Pendentes de Aprovação</h3>
+                    <span class="badge badge-warning" id="pending-count">0</span>
+                </div>
+                <div id="pending-users-container" class="pending-users-grid">
+                    <p class="text-muted text-center">Nenhum usuário pendente de aprovação</p>
+                </div>
+            </div>
+
+            <!-- All Users Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Todos os Usuários</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Empresa</th>
+                                <th>Tipo</th>
+                                <th>Função (RBAC)</th>
+                                <th>Status</th>
+                                <th>Cadastrado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-users-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Carregando usuários...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -435,6 +493,7 @@
     </div>
 
     <script src="js/auth.js"></script>
+    <script src="js/userManagement.js"></script>
     <script src="js/budgets.js"></script>
     <script src="js/projects.js"></script>
     <script src="js/materials.js"></script>

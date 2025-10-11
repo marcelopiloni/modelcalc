@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         budgets: document.getElementById('nav-budgets'),
         materials: document.getElementById('nav-materials'),
         files: document.getElementById('nav-files'),
+        users: document.getElementById('nav-users'),
         logout: document.getElementById('nav-logout')
     };
 
@@ -48,18 +49,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateNavigation() {
         if (auth.isAuthenticated()) {
-            Object.values(navLinks).forEach(link => link.classList.remove('hidden'));
-            document.getElementById('user-info').textContent = auth.user.name;
-            document.getElementById('user-info').classList.remove('hidden');
-            showSection('dashboard-section');
-            if (typeof loadDashboard === 'function') {
-                loadDashboard();
+            Object.values(navLinks).forEach(link => {
+                if (link) link.classList.remove('hidden');
+            });
+            
+            // Ocultar link de usuários para não-gerentes
+            if (navLinks.users && !auth.isManager()) {
+                navLinks.users.classList.add('hidden');
+            }
+            
+            // Mostrar informações do usuário com badge de função
+            const userInfoEl = document.getElementById('user-info');
+            const roleName = auth.getRoleName();
+            const roleBadgeClass = auth.isManager() ? 'badge-manager' : 
+                                   auth.isOperator() ? 'badge-operator' : 'badge-client';
+            
+            userInfoEl.innerHTML = `
+                ${auth.user.name}
+                <span class="user-role-badge ${roleBadgeClass}">${roleName}</span>
+            `;
+            userInfoEl.classList.remove('hidden');
+            
+            // Verificar se usuário está aprovado
+            if (!auth.isApproved()) {
+                showApprovalPendingMessage();
+            } else {
+                showSection('dashboard-section');
+                if (typeof loadDashboard === 'function') {
+                    loadDashboard();
+                }
             }
         } else {
-            Object.values(navLinks).forEach(link => link.classList.add('hidden'));
+            Object.values(navLinks).forEach(link => {
+                if (link) link.classList.add('hidden');
+            });
             document.getElementById('user-info').classList.add('hidden');
             showSection('login-section');
         }
+    }
+    
+    function showApprovalPendingMessage() {
+        const dashboardSection = document.getElementById('dashboard-section');
+        dashboardSection.innerHTML = `
+            <div class="approval-message">
+                <div class="approval-message-icon">⏳</div>
+                <div class="approval-message-content">
+                    <h3>Aguardando Aprovação</h3>
+                    <p>Seu cadastro está pendente de aprovação por um gerente. Você será notificado assim que for aprovado.</p>
+                </div>
+            </div>
+        `;
+        dashboardSection.classList.remove('hidden');
     }
 
     // Demais inicializações continuam abaixo...
@@ -81,13 +121,23 @@ document.addEventListener('DOMContentLoaded', () => {
     forms.register.addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
+            const role = document.getElementById('register-role').value;
             await auth.register({
                 name: document.getElementById('register-name').value,
                 email: document.getElementById('register-email').value,
                 password: document.getElementById('register-password').value,
                 company: document.getElementById('register-company').value,
-                userType: document.getElementById('register-type').value
+                userType: document.getElementById('register-type').value,
+                role: role
             });
+            
+            // Mostrar mensagem apropriada baseado na função
+            if (role === 'operator') {
+                showAlert('Cadastro realizado! Aguarde aprovação do gerente para acessar o sistema.', 'success');
+            } else {
+                showAlert('Cadastro realizado com sucesso!', 'success');
+            }
+            
             updateNavigation();
         } catch (error) {
             showAlert(error.message);
@@ -584,6 +634,16 @@ document.getElementById('nav-home').addEventListener('click', () => {
     if (isAuthenticated()) {
         showSection('dashboard-section');
         loadDashboard();
+    }
+});
+
+// Navigation for Users (Manager only)
+document.getElementById('nav-users').addEventListener('click', () => {
+    if (isAuthenticated() && auth.isManager()) {
+        showSection('user-management-section');
+        if (typeof showUserManagement === 'function') {
+            showUserManagement();
+        }
     }
 });
 
