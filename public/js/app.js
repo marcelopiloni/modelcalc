@@ -179,36 +179,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Coletar materiais
             document.querySelectorAll('.material-row').forEach(row => {
-                const inputs = row.querySelectorAll('input');
-                if (inputs[0].value && inputs[1].value && inputs[2].value) {
+                const materialSelect = row.querySelector('.material-select');
+                const quantityInput = row.querySelector('.quantity-input');
+                const costInput = row.querySelector('.unit-cost-input');
+                
+                if (materialSelect && quantityInput && costInput && 
+                    materialSelect.value && quantityInput.value && costInput.value) {
+                    
+                    const selectedOption = materialSelect.selectedOptions[0];
+                    const materialName = selectedOption ? selectedOption.textContent.split(' - ')[0] : 'Material';
+                    
                     materials.push({
-                        name: inputs[0].value,
-                        quantity: parseFloat(inputs[1].value),
-                        unitCost: parseFloat(inputs[2].value)
+                        materialId: materialSelect.value,
+                        name: materialName,
+                        quantity: parseFloat(quantityInput.value),
+                        unitCost: parseFloat(costInput.value)
                     });
                 }
             });
 
             // Coletar processos
             document.querySelectorAll('.process-row').forEach(row => {
-                const inputs = row.querySelectorAll('input');
-                if (inputs[0].value && inputs[1].value && inputs[2].value) {
+                const nameInput = row.querySelector('.process-name');
+                const durationInput = row.querySelector('.process-duration');
+                const costInput = row.querySelector('.process-cost');
+                
+                if (nameInput && durationInput && costInput && 
+                    nameInput.value && durationInput.value && costInput.value) {
                     processes.push({
-                        name: inputs[0].value,
-                        duration: parseFloat(inputs[1].value),
-                        hourlyRate: parseFloat(inputs[2].value)
+                        name: nameInput.value,
+                        duration: parseFloat(durationInput.value),
+                        hourlyRate: parseFloat(costInput.value)
                     });
                 }
             });
 
+            // Verificar se os elementos existem antes de acessar suas propriedades
+            const projectSelect = document.getElementById('budget-project');
+            const descriptionTextarea = document.getElementById('budget-description');
+            const laborCostInput = document.getElementById('budget-labor-cost');
+            const marginInput = document.getElementById('budget-margin');
+            
+            if (!projectSelect || !descriptionTextarea || !laborCostInput || !marginInput) {
+                throw new Error('Elementos do formulário não encontrados');
+            }
+            
+            if (!projectSelect.value) {
+                throw new Error('Por favor, selecione um projeto');
+            }
+            
+            if (!descriptionTextarea.value.trim()) {
+                throw new Error('Por favor, preencha a descrição do orçamento');
+            }
+
             const budgetData = {
-                projectId: document.getElementById('budget-project').value,
-                clientId: document.getElementById('budget-project').selectedOptions[0]?.dataset.clientId || auth.user.id,
-                description: document.getElementById('budget-description').value,
+                projectId: projectSelect.value,
+                clientId: projectSelect.selectedOptions[0]?.dataset.clientId || auth.user.id,
+                description: descriptionTextarea.value.trim(),
                 materials: materials,
                 processes: processes,
-                laborCost: parseFloat(document.getElementById('budget-labor-cost').value) || 0,
-                margin: parseFloat(document.getElementById('budget-margin').value) || 0
+                laborCost: parseFloat(laborCostInput.value) || 0,
+                margin: parseFloat(marginInput.value) || 0
             };
 
             await budgets.create(budgetData);
@@ -241,17 +272,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // Funções para carregar dados
 async function loadProjectsInSelect() {
     try {
-        const projectsList = await projects.list();
         const select = document.getElementById('budget-project');
+        if (!select) {
+            console.error('Elemento budget-project não encontrado');
+            return;
+        }
+        
+        const projectsList = await projects.list();
         select.innerHTML = '<option value="">Selecione um projeto</option>';
+        
+        if (!projectsList || projectsList.length === 0) {
+            select.innerHTML += '<option value="" disabled>Nenhum projeto disponível</option>';
+            return;
+        }
         
         projectsList.forEach(project => {
             const option = document.createElement('option');
             option.value = project._id;
-            option.textContent = `${project.name} - ${project.clientId.name}`;
+            option.textContent = `${project.name} - ${project.client?.name || project.clientId?.name || 'Cliente não informado'}`;
             select.appendChild(option);
         });
     } catch (error) {
+        console.error('Erro ao carregar projetos:', error);
         showAlert('Erro ao carregar projetos: ' + error.message);
     }
 }
