@@ -168,3 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadMaterials();
     }
 });
+
+// Expose functions globally for onclick handlers
+window.editMaterial = editMaterial;
+window.deleteMaterial = deleteMaterial;
+window.showNewMaterial = showNewMaterial;

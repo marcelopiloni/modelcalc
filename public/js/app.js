@@ -308,6 +308,14 @@ window.isAuthenticated = function() {
     return localStorage.getItem('token') !== null;
 }
 
+// Navigation for Budgets
+document.getElementById('nav-budgets').addEventListener('click', () => {
+    if (isAuthenticated()) {
+        showSection('budgets-section');
+        loadBudgets();
+    }
+});
+
 // Navigation for Projects
 document.getElementById('nav-projects').addEventListener('click', () => {
     if (isAuthenticated()) {

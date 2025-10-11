@@ -216,3 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadClients();
     }
 });
+
+// Expose functions globally for onclick handlers
+window.editProject = editProject;
+window.deleteProject = deleteProject;
+window.showNewProject = showNewProject;
