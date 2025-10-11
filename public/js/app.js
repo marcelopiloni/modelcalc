@@ -158,6 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Carregar projetos no select
         await loadProjectsInSelect();
         
+        // Carregar materiais para uso nos dropdowns
+        await loadMaterialsForBudget();
+        
         showSection('budget-form-section');
     });
 
@@ -251,21 +254,76 @@ async function loadProjectsInSelect() {
 }
 
 // Funções para gerenciar materiais
-function addMaterialRow() {
+// Função para carregar materiais para uso nos orçamentos
+async function loadMaterialsForBudget() {
+    try {
+        if (typeof loadMaterials === 'function') {
+            await loadMaterials();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar materiais para orçamento:', error);
+        showAlert('Erro ao carregar materiais: ' + error.message);
+    }
+}
+
+async function addMaterialRow() {
+    // Garantir que os materiais estão carregados
+    if (!window.currentMaterials || window.currentMaterials.length === 0) {
+        try {
+            await loadMaterials();
+        } catch (error) {
+            console.error('Erro ao carregar materiais:', error);
+            showAlert('Erro ao carregar materiais cadastrados');
+            return;
+        }
+    }
+    
     const container = document.getElementById('materials-list');
     const row = document.createElement('div');
     row.className = 'material-row';
     row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
     
+    // Criar select com materiais cadastrados
+    let materialOptions = '<option value="">Selecione um material</option>';
+    if (window.currentMaterials && window.currentMaterials.length > 0) {
+        window.currentMaterials.forEach(material => {
+            materialOptions += `<option value="${material._id}" data-cost="${material.unitCost}" data-unit="${material.unit}">
+                ${material.name} - ${material.category} (${material.unit}) - R$ ${material.unitCost.toFixed(2)}
+            </option>`;
+        });
+    }
+    
     row.innerHTML = `
-        <input type="text" placeholder="Nome do material" required style="flex: 2;">
-        <input type="number" placeholder="Quantidade" min="0.01" step="0.01" required style="flex: 1;">
-        <input type="number" placeholder="Custo unitário" min="0" step="0.01" required style="flex: 1;">
+        <select class="material-select" required style="flex: 2;" onchange="updateMaterialCost(this)">
+            ${materialOptions}
+        </select>
+        <input type="number" class="quantity-input" placeholder="Quantidade" min="0.01" step="0.01" required style="flex: 1;">
+        <input type="number" class="unit-cost-input" placeholder="Custo unitário" min="0" step="0.01" required style="flex: 1;" readonly>
+        <span class="unit-label" style="flex: 0.5; font-size: 0.9em;"></span>
         <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding: 5px 10px;">X</button>
     `;
     
     container.appendChild(row);
 }
+
+// Função para atualizar custo do material selecionado
+function updateMaterialCost(selectElement) {
+    const selectedOption = selectElement.selectedOptions[0];
+    if (selectedOption && selectedOption.value) {
+        const cost = selectedOption.getAttribute('data-cost');
+        const unit = selectedOption.getAttribute('data-unit');
+        
+        const row = selectElement.parentElement;
+        const costInput = row.querySelector('.unit-cost-input');
+        const unitLabel = row.querySelector('.unit-label');
+        
+        if (costInput) costInput.value = cost;
+        if (unitLabel) unitLabel.textContent = unit;
+    }
+}
+
+// Expor função globalmente
+window.updateMaterialCost = updateMaterialCost;
 
 // Funções para gerenciar processos
 function addProcessRow() {

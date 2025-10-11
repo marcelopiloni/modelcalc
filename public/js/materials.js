@@ -1,6 +1,9 @@
 // Material Management Functions
 let currentMaterials = [];
 
+// Expor currentMaterials globalmente para uso em orçamentos
+window.currentMaterials = currentMaterials;
+
 // Load materials
 async function loadMaterials() {
     try {
@@ -16,6 +19,8 @@ async function loadMaterials() {
             const result = await response.json();
             // Tratar diferentes formatos de resposta
             currentMaterials = result.data || result || [];
+            // Atualizar variável global
+            window.currentMaterials = currentMaterials;
             displayMaterials();
             updateMaterialSelectors();
         } else {
