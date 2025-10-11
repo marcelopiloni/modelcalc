@@ -51,8 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.values(navLinks).forEach(link => link.classList.remove('hidden'));
             document.getElementById('user-info').textContent = auth.user.name;
             document.getElementById('user-info').classList.remove('hidden');
-            showSection('budgets-section');
-            loadBudgets();
+            showSection('dashboard-section');
+            if (typeof loadDashboard === 'function') {
+                loadDashboard();
+            }
         } else {
             Object.values(navLinks).forEach(link => link.classList.add('hidden'));
             document.getElementById('user-info').classList.add('hidden');
@@ -60,50 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Gerenciamento de orçamentos
-    async function loadBudgets() {
-        try {
-            const budgetsList = await budgets.list();
-            const tbody = document.getElementById('budgets-table-body');
-            
-            if (!tbody) {
-                console.error('Elemento budgets-table-body não encontrado');
-                return;
-            }
-            
-            tbody.innerHTML = '';
-
-            if (!budgetsList || budgetsList.length === 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td colspan="5" class="text-center">Nenhum orçamento encontrado</td>
-                `;
-                tbody.appendChild(tr);
-                return;
-            }
-
-            budgetsList.forEach(budget => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${budget.clientId?.name || 'Cliente não informado'}</td>
-                    <td>${budget.projectId?.name || 'Projeto não informado'}</td>
-                    <td>R$ ${(budget.finalPrice || 0).toFixed(2)}</td>
-                    <td>${budget.status || 'Status não definido'}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick="viewBudget('${budget._id}')">Ver</button>
-                        ${auth.isSupplier() ? `
-                            <button class="btn btn-danger btn-sm" onclick="deleteBudget('${budget._id}')">Excluir</button>
-                        ` : ''}
-                        <button class="btn btn-success btn-sm" onclick="downloadExcel('${budget._id}')">Excel</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (error) {
-            console.error('Erro ao carregar orçamentos:', error);
-            showAlert(error.message || 'Erro ao carregar orçamentos');
-        }
-    }
+    // Demais inicializações continuam abaixo...
 
     // Event Listeners
     forms.login.addEventListener('submit', async (e) => {
@@ -157,6 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Limpar materiais e processos existentes
         clearBudgetItems();
+        
+        // Limpar seleção de arquivos CAD
+        if (typeof clearCADSelection === 'function') {
+            clearCADSelection();
+        }
         
         // Carregar projetos no select
         await loadProjectsInSelect();
@@ -268,6 +232,77 @@ document.addEventListener('DOMContentLoaded', () => {
         showSection('login-section');
     }
 });
+
+// Estado global para orçamentos carregados
+let currentBudgets = [];
+
+// Gerenciamento de orçamentos
+async function loadBudgets() {
+    try {
+        console.log('Loading budgets...');
+        const budgetsList = await budgets.list();
+        currentBudgets = Array.isArray(budgetsList) ? budgetsList : [];
+        window.currentBudgets = currentBudgets;
+
+        console.log('Budgets loaded:', currentBudgets.length);
+
+        const tbody = document.getElementById('budgets-table-body');
+
+        if (!tbody) {
+            console.error('Elemento budgets-table-body não encontrado');
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (currentBudgets.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td colspan="5" class="text-center">Nenhum orçamento encontrado</td>
+            `;
+            tbody.appendChild(tr);
+            console.log('No budgets found, showing empty message');
+            return;
+        }
+
+        currentBudgets.forEach(budget => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${budget.clientId?.name || 'Cliente não informado'}</td>
+                <td>${budget.projectId?.name || 'Projeto não informado'}</td>
+                <td>R$ ${(budget.finalPrice || 0).toFixed(2)}</td>
+                <td>${budget.status || 'Status não definido'}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm view-budget-btn" data-budget-id="${budget._id}">Ver</button>
+                    ${auth.isSupplier() ? `
+                        <button class="btn btn-danger btn-sm delete-budget-btn" data-budget-id="${budget._id}">Excluir</button>
+                    ` : ''}
+                    <button class="btn btn-success btn-sm excel-budget-btn" data-budget-id="${budget._id}">Excel</button>
+                    <button class="btn btn-secondary btn-sm pdf-budget-btn" data-budget-id="${budget._id}">PDF</button>
+                </td>
+            `;
+
+            const viewBtn = tr.querySelector('.view-budget-btn');
+            const deleteBtn = tr.querySelector('.delete-budget-btn');
+            const excelBtn = tr.querySelector('.excel-budget-btn');
+            const pdfBtn = tr.querySelector('.pdf-budget-btn');
+
+            viewBtn.addEventListener('click', () => viewBudget(budget._id));
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => deleteBudget(budget._id));
+            }
+            excelBtn.addEventListener('click', () => downloadExcel(budget._id));
+            if (pdfBtn) {
+                pdfBtn.addEventListener('click', () => downloadPDF(budget._id));
+            }
+
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Erro ao carregar orçamentos:', error);
+        showAlert(error.message || 'Erro ao carregar orçamentos');
+    }
+}
 
 // Funções para carregar dados
 async function loadProjectsInSelect() {
@@ -431,7 +466,41 @@ function addProcessRow() {
 
 // Funções globais para interação com a tabela
 function viewBudget(id) {
-    // Implementar visualização/edição de orçamento
+    const budget = currentBudgets.find(b => b._id === id);
+    if (!budget) return;
+    
+    // Preencher o formulário para edição
+    document.getElementById('budget-form-title').textContent = 'Editar Orçamento';
+    document.getElementById('budget-id').value = budget._id;
+    document.getElementById('budget-description').value = budget.description || '';
+    document.getElementById('budget-labor-cost').value = budget.laborCost || 0;
+    document.getElementById('budget-margin').value = budget.margin || 0;
+    
+    // Selecionar projeto
+    const projectSelect = document.getElementById('budget-project');
+    if (projectSelect && budget.projectId) {
+        projectSelect.value = budget.projectId._id || budget.projectId;
+    }
+    
+    // Limpar listas atuais
+    document.getElementById('materials-list').innerHTML = '';
+    document.getElementById('processes-list').innerHTML = '';
+    
+    // Carregar materiais existentes
+    if (budget.materials && budget.materials.length > 0) {
+        budget.materials.forEach(material => {
+            addMaterialRow(material);
+        });
+    }
+    
+    // Carregar processos existentes
+    if (budget.processes && budget.processes.length > 0) {
+        budget.processes.forEach(process => {
+            addProcessRow(process);
+        });
+    }
+    
+    showSection('budget-form-section');
 }
 
 function deleteBudget(id) {
@@ -445,13 +514,28 @@ function deleteBudget(id) {
 }
 
 function downloadExcel(id) {
-    budgets.downloadExcel(id);
+    if (window.budgets && window.budgets.downloadExcel) {
+        window.budgets.downloadExcel(id);
+    } else {
+        showAlert('Erro: Módulo de orçamentos não carregado corretamente');
+    }
+}
+
+function downloadPDF(id) {
+    if (window.budgets && window.budgets.downloadPDF) {
+        window.budgets.downloadPDF(id);
+    } else {
+        showAlert('Erro: Módulo de orçamentos não carregado corretamente');
+    }
 }
 
 // Global function to check authentication
 window.isAuthenticated = function() {
     return localStorage.getItem('token') !== null;
 }
+
+// Expose loadBudgets globally
+window.loadBudgets = loadBudgets;
 
 // Navigation for Budgets
 document.getElementById('nav-budgets').addEventListener('click', () => {
@@ -494,3 +578,30 @@ document.getElementById('nav-files').addEventListener('click', () => {
         loadCADFiles();
     }
 });
+
+// Navigation for Home/Dashboard
+document.getElementById('nav-home').addEventListener('click', () => {
+    if (isAuthenticated()) {
+        showSection('dashboard-section');
+        loadDashboard();
+    }
+});
+
+// Check authentication and load data when page loads
+function initializeApp() {
+    if (auth.isAuthenticated()) {
+        updateNavigation();
+        // Pre-load data for better user experience
+        setTimeout(() => {
+            loadBudgets();
+            if (typeof loadProjects === 'function') loadProjects();
+            if (typeof loadMaterials === 'function') loadMaterials();
+            if (typeof loadCADFiles === 'function') loadCADFiles();
+        }, 500);
+    } else {
+        updateNavigation();
+    }
+}
+
+// Initialize app when DOM is loaded
+setTimeout(initializeApp, 100);
