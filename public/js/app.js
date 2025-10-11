@@ -48,12 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.values(navLinks).forEach(link => link.classList.remove('hidden'));
             document.getElementById('user-info').textContent = auth.user.name;
             document.getElementById('user-info').classList.remove('hidden');
-            showSection('budgets');
+            showSection('budgets-section');
             loadBudgets();
         } else {
             Object.values(navLinks).forEach(link => link.classList.add('hidden'));
             document.getElementById('user-info').classList.add('hidden');
-            showSection('login');
+            showSection('login-section');
         }
     }
 
@@ -118,12 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('show-register').addEventListener('click', (e) => {
         e.preventDefault();
-        showSection('register');
+        showSection('register-section');
     });
 
     document.getElementById('show-login').addEventListener('click', (e) => {
         e.preventDefault();
-        showSection('login');
+        showSection('login-section');
     });
 
     navLinks.logout.addEventListener('click', (e) => {
@@ -139,11 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Carregar projetos no select
         await loadProjectsInSelect();
         
-        showSection('budgetForm');
+        showSection('budget-form-section');
     });
 
     document.getElementById('cancel-budget-btn').addEventListener('click', () => {
-        showSection('budgets');
+        showSection('budgets-section');
     });
 
     forms.budget.addEventListener('submit', async (e) => {
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             await budgets.create(budgetData);
             showAlert('Orçamento criado com sucesso!', 'success');
-            showSection('budgets');
+            showSection('budgets-section');
             loadBudgets();
         } catch (error) {
             showAlert('Erro ao criar orçamento: ' + error.message);
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (auth.initAuth()) {
         updateNavigation();
     } else {
-        showSection('login');
+        showSection('login-section');
     }
 });
 
