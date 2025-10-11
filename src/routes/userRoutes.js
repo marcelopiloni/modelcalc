@@ -4,6 +4,7 @@ const UserController = require('../controllers/UserController');
 const auth = require('../middleware/auth');
 const { body } = require('express-validator');
 const { validateRequest } = require('../middleware/validation');
+const { isManager, isAuthenticated } = require('../middleware/rbac');
 
 // Validação para registro de usuário
 const registerValidation = [
@@ -28,5 +29,16 @@ router.post('/login', loginValidation, validateRequest, UserController.login);
 router.get('/', auth, UserController.getUsers);
 router.put('/:id', auth, UserController.updateUser);
 router.delete('/:id', auth, UserController.deleteUser);
+
+// ========== ROTAS RBAC ==========
+
+// Perfil do usuário logado
+router.get('/me', auth, isAuthenticated, UserController.getMyProfile);
+
+// Rotas de gerenciamento de usuários (apenas gerentes)
+router.get('/pending', auth, isManager, UserController.getPendingUsers);
+router.patch('/:id/approve', auth, isManager, UserController.approveUser);
+router.patch('/:id/role', auth, isManager, UserController.updateUserRole);
+router.patch('/:id/toggle-status', auth, isManager, UserController.toggleUserStatus);
 
 module.exports = router;

@@ -72,11 +72,15 @@ class FileController {
       if (budgetId) query.budgetId = budgetId;
       if (projectId) query.projectId = projectId;
       
-      // Filter by user permissions
-      if (req.user.userType === 'client') {
-        // Clients can only see files from their own budgets/projects
+      // RBAC: Filter by user role
+      if (req.user.role === 'client') {
+        // Clients can only see files they uploaded
+        query.uploadedBy = req.user.userId;
+      } else if (req.user.role === 'operator') {
+        // Operators can only see files they uploaded
         query.uploadedBy = req.user.userId;
       }
+      // Managers can see all files (no filter)
       
       const files = await CADFile.find(query)
         .populate('budgetId', 'description')

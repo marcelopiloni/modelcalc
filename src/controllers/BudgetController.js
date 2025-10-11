@@ -115,10 +115,15 @@ class BudgetController {
             console.log('Buscando orçamentos para usuário:', req.user);
             let query = {};
             
-            // Se for cliente, mostrar apenas seus orçamentos
-            if (req.user.userType === 'client') {
+            // RBAC: Filtrar orçamentos baseado no role
+            if (req.user.role === 'client') {
+                // Cliente vê apenas seus próprios orçamentos
                 query.clientId = req.user.userId;
+            } else if (req.user.role === 'operator') {
+                // Operador vê apenas orçamentos que ele criou
+                query.createdBy = req.user.userId;
             }
+            // Gerente vê todos os orçamentos (sem filtro)
 
             console.log('Query de busca:', query);
             const budgets = await Budget.find(query)

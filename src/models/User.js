@@ -25,6 +25,25 @@ const userSchema = new mongoose.Schema({
         enum: ['client', 'supplier'],
         required: true
     },
+    role: {
+        type: String,
+        enum: ['manager', 'operator', 'client'],
+        required: true,
+        default: 'client'
+    },
+    approved: {
+        type: Boolean,
+        default: false
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    approvedAt: {
+        type: Date,
+        default: null
+    },
     active: {
         type: Boolean,
         default: true

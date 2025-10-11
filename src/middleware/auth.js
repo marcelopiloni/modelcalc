@@ -28,7 +28,11 @@ module.exports = async (req, res, next) => {
         // Adicionar informações do usuário ao request
         req.user = {
             userId: user._id,
-            userType: user.userType
+            userType: user.userType,
+            role: user.role,
+            approved: user.approved,
+            name: user.name,
+            email: user.email
         };
 
         next();
