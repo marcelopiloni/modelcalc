@@ -187,7 +187,7 @@ function displayAllUsers() {
     
     if (allUsers.length === 0) {
         const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="6" class="text-center">Nenhum usuário encontrado</td>';
+        row.innerHTML = '<td colspan="8" class="text-center">Nenhum usuário encontrado</td>';
         tableBody.appendChild(row);
         return;
     }
@@ -199,22 +199,45 @@ function displayAllUsers() {
             ? '<span class="badge badge-success">Aprovado</span>' 
             : '<span class="badge badge-warning">Pendente</span>';
             
-        const activeBadge = user.active 
-            ? '<span class="badge badge-success">Ativo</span>' 
-            : '<span class="badge badge-danger">Inativo</span>';
+        const createdDate = new Date(user.createdAt).toLocaleDateString('pt-BR');
+        
+        // Get role badge with color
+        let roleBadge = '';
+        switch(user.role) {
+            case 'admin':
+                roleBadge = '<span class="badge badge-admin">🔑 Admin</span>';
+                break;
+            case 'manager':
+                roleBadge = '<span class="badge badge-manager">👔 Gerente</span>';
+                break;
+            case 'operator':
+                roleBadge = '<span class="badge badge-operator">👨‍💼 Operador</span>';
+                break;
+            case 'client':
+                roleBadge = '<span class="badge badge-client">👤 Cliente</span>';
+                break;
+            default:
+                roleBadge = `<span class="badge">${user.role}</span>`;
+        }
         
         row.innerHTML = `
             <td>${user.name}</td>
             <td>${user.email}</td>
             <td>${user.company || '-'}</td>
-            <td>${getRoleName(user.role)}</td>
-            <td>${statusBadge} ${activeBadge}</td>
+            <td>${user.userType === 'client' ? 'Cliente' : 'Fornecedor'}</td>
+            <td>${roleBadge}</td>
+            <td>${statusBadge}</td>
+            <td>${createdDate}</td>
             <td>
-                <button class="btn btn-primary btn-sm" onclick="showEditUserModal('${user._id}')">
-                    Editar Role
-                </button>
+                <select class="form-control form-control-sm" style="display: inline-block; width: auto; margin-right: 5px;" onchange="updateUserRole('${user._id}', this.value)">
+                    <option value="">Alterar Role...</option>
+                    <option value="manager">👔 Gerente</option>
+                    <option value="operator">👨‍💼 Operador</option>
+                    <option value="client">👤 Cliente</option>
+                    ${auth.isAdmin() ? '<option value="admin">🔑 Admin</option>' : ''}
+                </select>
                 <button class="btn btn-${user.active ? 'warning' : 'success'} btn-sm" onclick="toggleUserStatus('${user._id}')">
-                    ${user.active ? 'Desativar' : 'Ativar'}
+                    ${user.active ? '🚫 Desativar' : '✓ Ativar'}
                 </button>
             </td>
         `;
@@ -253,25 +276,25 @@ async function toggleUserStatus(userId) {
     }
 }
 
-// Show edit user role modal
+// Show edit user role modal (not used anymore, kept for compatibility)
 function showEditUserModal(userId) {
-    const user = allUsers.find(u => u._id === userId);
-    if (!user) return;
-    
-    const newRole = prompt(
-        `Alterar role de ${user.name}\n\nRole atual: ${getRoleName(user.role)}\n\nDigite a nova role:\n- manager (Gerente)\n- operator (Operador)\n- client (Cliente)`,
-        user.role
-    );
-    
-    if (newRole && ['manager', 'operator', 'client'].includes(newRole)) {
-        updateUserRole(userId, newRole);
-    } else if (newRole) {
-        showAlert('Role inválida. Use: manager, operator ou client', 'error');
-    }
+    // This function is no longer needed as we use inline dropdown
+    // Kept for backward compatibility
+    console.log('showEditUserModal called for userId:', userId);
 }
 
 // Update user role
 async function updateUserRole(userId, role) {
+    // Prevent empty selection
+    if (!role) {
+        return;
+    }
+    
+    if (!confirm(`Tem certeza que deseja alterar a função deste usuário?`)) {
+        loadAllUsers(); // Reload to reset dropdown
+        return;
+    }
+    
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/auth/${userId}/role`, {
@@ -290,10 +313,12 @@ async function updateUserRole(userId, role) {
             loadAllUsers();
         } else {
             showAlert(result.message || 'Erro ao atualizar role', 'error');
+            loadAllUsers(); // Reload to reset dropdown
         }
     } catch (error) {
         console.error('Error updating user role:', error);
         showAlert('Erro ao atualizar role do usuário', 'error');
+        loadAllUsers(); // Reload to reset dropdown
     }
 }
 
@@ -324,24 +349,41 @@ function showUserManagement() {
         document.getElementById('user-management-section').classList.remove('hidden');
     }
     
-    // Show create user section only for admin
-    const createUserSection = document.getElementById('create-user-section');
-    console.log('🔍 createUserSection element:', createUserSection);
-    
-    if (createUserSection) {
+    // Show/hide create user button for admin
+    const createUserBtn = document.getElementById('create-user-btn');
+    if (createUserBtn) {
         if (auth.isAdmin()) {
-            console.log('✅ Removendo classe hidden do create-user-section');
-            createUserSection.classList.remove('hidden');
+            console.log('✅ Mostrando botão criar usuário');
+            createUserBtn.classList.remove('hidden');
         } else {
-            console.log('❌ Adicionando classe hidden ao create-user-section (não é admin)');
-            createUserSection.classList.add('hidden');
+            console.log('❌ Escondendo botão criar usuário (não é admin)');
+            createUserBtn.classList.add('hidden');
         }
-    } else {
-        console.error('❌ Elemento create-user-section não encontrado!');
     }
     
     loadPendingUsers();
     loadAllUsers();
+}
+
+// Open create user modal
+function openCreateUserModal() {
+    const modal = document.getElementById('create-user-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Close create user modal
+function closeCreateUserModal() {
+    const modal = document.getElementById('create-user-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Reset form
+        const form = document.getElementById('create-user-form');
+        if (form) {
+            form.reset();
+        }
+    }
 }
 
 // Setup create user form (Admin only)
@@ -364,6 +406,7 @@ function setupCreateUserForm() {
         const success = await createNewUser(userData);
         if (success) {
             form.reset();
+            closeCreateUserModal(); // Close modal on success
         }
     });
 }
@@ -372,10 +415,13 @@ function setupCreateUserForm() {
 window.createNewUser = createNewUser;
 window.approveUser = approveUser;
 window.toggleUserStatus = toggleUserStatus;
+window.updateUserRole = updateUserRole;
 window.showEditUserModal = showEditUserModal;
 window.showUserManagement = showUserManagement;
 window.loadPendingUsers = loadPendingUsers;
 window.loadAllUsers = loadAllUsers;
+window.openCreateUserModal = openCreateUserModal;
+window.closeCreateUserModal = closeCreateUserModal;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

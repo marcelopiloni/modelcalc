@@ -536,7 +536,8 @@ input[type="file"]:hover {
     color: #2c3e50;
 }
 
-.modal-close {
+.modal-close,
+.modal .close {
     background: none;
     border: none;
     font-size: 1.5rem;
@@ -550,7 +551,8 @@ input[type="file"]:hover {
     justify-content: center;
 }
 
-.modal-close:hover {
+.modal-close:hover,
+.modal .close:hover {
     color: #e74c3c;
 }
 
