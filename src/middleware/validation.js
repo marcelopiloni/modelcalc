@@ -17,9 +17,20 @@ const validateRequest = (req, res, next) => {
 
 // Budget validation schema
 const budgetSchema = Joi.object({
-  projectId: Joi.string().optional(),
-  clientName: Joi.string().required().min(2).max(100),
+  projectId: Joi.string().required(),
+  clientId: Joi.string().optional(),
   description: Joi.string().required().min(5).max(500),
+  materials: Joi.array().items(Joi.object({
+    materialId: Joi.string().optional(),
+    name: Joi.string().required().min(2).max(100),
+    quantity: Joi.number().required().min(0.001),
+    unitCost: Joi.number().required().min(0)
+  })).default([]),
+  processes: Joi.array().items(Joi.object({
+    name: Joi.string().required().min(2).max(100),
+    duration: Joi.number().required().min(0.1),
+    hourlyRate: Joi.number().required().min(0)
+  })).default([]),
   laborCost: Joi.number().min(0).default(0),
   materialCost: Joi.number().min(0).default(0),
   processingCost: Joi.number().min(0).default(0),
