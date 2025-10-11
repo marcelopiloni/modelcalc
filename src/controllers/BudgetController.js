@@ -75,6 +75,7 @@ class BudgetController {
 
     async getAllBudgets(req, res) {
         try {
+            console.log('Buscando orçamentos para usuário:', req.user);
             let query = {};
             
             // Se for cliente, mostrar apenas seus orçamentos
@@ -82,18 +83,21 @@ class BudgetController {
                 query.clientId = req.user.userId;
             }
 
+            console.log('Query de busca:', query);
             const budgets = await Budget.find(query)
                 .populate('projectId')
                 .populate('clientId')
                 .populate('createdBy')
                 .sort('-createdAt');
 
+            console.log('Orçamentos encontrados:', budgets.length);
             res.status(200).json({
                 status: 'success',
                 results: budgets.length,
                 data: budgets
             });
         } catch (error) {
+            console.error('Erro ao buscar orçamentos:', error);
             res.status(500).json({
                 status: 'error',
                 message: 'Erro ao buscar orçamentos',

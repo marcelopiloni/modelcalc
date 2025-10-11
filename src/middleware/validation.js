@@ -1,4 +1,19 @@
 const Joi = require('joi');
+const { validationResult } = require('express-validator');
+
+// Express Validator middleware
+const validateRequest = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log('Erro de validação:', errors.array());
+        return res.status(400).json({
+            status: 'error',
+            message: 'Erro de validação',
+            errors: errors.array()
+        });
+    }
+    next();
+};
 
 // Budget validation schema
 const budgetSchema = Joi.object({
@@ -30,8 +45,7 @@ const processSchema = Joi.object({
 const projectSchema = Joi.object({
   name: Joi.string().required().min(2).max(100),
   description: Joi.string().required().min(5).max(500),
-  clientName: Joi.string().required().min(2).max(100),
-  clientEmail: Joi.string().email().required(),
+  clientId: Joi.string().required(),
   status: Joi.string().valid('active', 'completed', 'cancelled').default('active')
 });
 
@@ -97,6 +111,7 @@ const validateProject = (req, res, next) => {
 };
 
 module.exports = {
+  validateRequest,
   validateBudget,
   validateMaterial,
   validateProcess,

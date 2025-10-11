@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 class UserController {
     async register(req, res) {
         try {
+            console.log('Dados recebidos para registro:', req.body);
             const { email, password, name, company, userType } = req.body;
 
             // Verificar se usuário já existe
@@ -42,6 +43,7 @@ class UserController {
                 }
             });
         } catch (error) {
+            console.error('Erro no registro:', error);
             res.status(500).json({ message: 'Erro ao criar usuário', error: error.message });
         }
     }
