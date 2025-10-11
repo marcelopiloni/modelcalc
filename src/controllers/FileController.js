@@ -1,12 +1,8 @@
-const CADFile = require('../models/CADFile');
-const { v4: uuidv4 } = require('uuid');
+const CADFile = require('../models/CADFileMongo');
 const path = require('path');
 const fs = require('fs-extra');
 
 class FileController {
-  constructor() {
-    this.cadFiles = new Map(); // In-memory storage
-  }
 
   async uploadCADFile(req, res) {
     try {
@@ -33,29 +29,29 @@ class FileController {
       }
 
       const cadFileData = {
-        id: uuidv4(),
         originalName: file.originalname,
         filename: file.filename,
         path: file.path,
         size: file.size,
         format: fileExtension,
         mimetype: file.mimetype,
-        uploadedAt: new Date(),
-        budgetId: req.body.budgetId || null
+        budgetId: req.body.budgetId || null,
+        projectId: req.body.projectId || null,
+        uploadedBy: req.user.userId
       };
 
       const cadFile = new CADFile(cadFileData);
-      this.cadFiles.set(cadFile.id, cadFile);
+      await cadFile.save();
 
       // Simulate CAD file analysis (aqui você integraria com biblioteca de análise CAD)
       setTimeout(() => {
-        this.simulateCADAnalysis(cadFile.id);
+        this.simulateCADAnalysis(cadFile._id);
       }, 1000);
 
       res.status(201).json({
         status: 'success',
         message: 'Arquivo CAD enviado com sucesso',
-        data: cadFile.toJSON()
+        data: cadFile
       });
     } catch (error) {
       res.status(500).json({
@@ -68,7 +64,24 @@ class FileController {
 
   async getCADFiles(req, res) {
     try {
-      const files = Array.from(this.cadFiles.values()).map(file => file.toJSON());
+      const { budgetId, projectId } = req.query;
+      let query = {};
+      
+      // Filter by budget or project if specified
+      if (budgetId) query.budgetId = budgetId;
+      if (projectId) query.projectId = projectId;
+      
+      // Filter by user permissions
+      if (req.user.userType === 'client') {
+        // Clients can only see files from their own budgets/projects
+        query.uploadedBy = req.user.userId;
+      }
+      
+      const files = await CADFile.find(query)
+        .populate('budgetId', 'description')
+        .populate('projectId', 'name')
+        .populate('uploadedBy', 'name email')
+        .sort({ createdAt: -1 });
       
       res.status(200).json({
         status: 'success',
@@ -87,12 +100,23 @@ class FileController {
   async getCADFileById(req, res) {
     try {
       const { id } = req.params;
-      const cadFile = this.cadFiles.get(id);
+      const cadFile = await CADFile.findById(id)
+        .populate('budgetId', 'description')
+        .populate('projectId', 'name')
+        .populate('uploadedBy', 'name email');
 
       if (!cadFile) {
         return res.status(404).json({
           status: 'error',
           message: 'Arquivo não encontrado'
+        });
+      }
+
+      // Check permissions
+      if (req.user.userType === 'client' && cadFile.uploadedBy._id.toString() !== req.user.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Acesso não autorizado'
         });
       }
 
@@ -112,7 +136,7 @@ class FileController {
   async deleteCADFile(req, res) {
     try {
       const { id } = req.params;
-      const cadFile = this.cadFiles.get(id);
+      const cadFile = await CADFile.findById(id);
 
       if (!cadFile) {
         return res.status(404).json({
@@ -121,11 +145,19 @@ class FileController {
         });
       }
 
+      // Check permissions
+      if (req.user.userType === 'client' && cadFile.uploadedBy.toString() !== req.user.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Acesso não autorizado'
+        });
+      }
+
       // Remove file from filesystem
       await fs.remove(cadFile.path);
       
-      // Remove from memory storage
-      this.cadFiles.delete(id);
+      // Remove from database
+      await CADFile.findByIdAndDelete(id);
 
       res.status(200).json({
         status: 'success',
@@ -143,12 +175,20 @@ class FileController {
   async downloadCADFile(req, res) {
     try {
       const { id } = req.params;
-      const cadFile = this.cadFiles.get(id);
+      const cadFile = await CADFile.findById(id);
 
       if (!cadFile) {
         return res.status(404).json({
           status: 'error',
           message: 'Arquivo não encontrado'
+        });
+      }
+
+      // Check permissions
+      if (req.user.userType === 'client' && cadFile.uploadedBy.toString() !== req.user.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Acesso não autorizado'
         });
       }
 
@@ -170,21 +210,29 @@ class FileController {
   }
 
   // Simulate CAD file analysis (replace with real CAD analysis library)
-  simulateCADAnalysis(fileId) {
-    const cadFile = this.cadFiles.get(fileId);
-    if (!cadFile) return;
+  async simulateCADAnalysis(fileId) {
+    try {
+      const cadFile = await CADFile.findById(fileId);
+      if (!cadFile) return;
 
-    const analysisData = {
-      volume: Math.random() * 1000 + 50, // cm³
-      surfaceArea: Math.random() * 500 + 100, // cm²
-      complexity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
-      estimatedMachiningTime: Math.random() * 8 + 1, // hours
-      suggestedMaterials: ['Alumínio 6061', 'Aço Carbono', 'Aço Inox 316'],
-      manufacturingProcesses: ['Usinagem CNC', 'Torneamento', 'Fresamento']
-    };
+      const analysisData = {
+        volume: Math.random() * 1000 + 50, // cm³
+        surfaceArea: Math.random() * 500 + 100, // cm²
+        complexity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
+        estimatedMachiningTime: Math.random() * 8 + 1, // hours
+        suggestedMaterials: ['Alumínio 6061', 'Aço Carbono', 'Aço Inox 316'],
+        manufacturingProcesses: ['Usinagem CNC', 'Torneamento', 'Fresamento']
+      };
 
-    cadFile.updateAnalysis(analysisData);
-    console.log(`✅ Análise CAD concluída para arquivo: ${cadFile.originalName}`);
+      await CADFile.findByIdAndUpdate(fileId, { 
+        processed: true, 
+        analysis: analysisData 
+      });
+      
+      console.log(`✅ Análise CAD concluída para arquivo: ${cadFile.originalName}`);
+    } catch (error) {
+      console.error('Erro na simulação de análise CAD:', error);
+    }
   }
 }
 

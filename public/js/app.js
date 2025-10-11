@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         projects: document.getElementById('nav-projects'),
         budgets: document.getElementById('nav-budgets'),
         materials: document.getElementById('nav-materials'),
+        files: document.getElementById('nav-files'),
         logout: document.getElementById('nav-logout')
     };
 
@@ -315,4 +316,12 @@ document.getElementById('new-project-btn').addEventListener('click', () => {
 // Material new button
 document.getElementById('new-material-btn').addEventListener('click', () => {
     showNewMaterial();
+});
+
+// Navigation for Files
+document.getElementById('nav-files').addEventListener('click', () => {
+    if (isAuthenticated()) {
+        showSection('files-section');
+        loadCADFiles();
+    }
 });
