@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const navLinks = {
         home: document.getElementById('nav-home'),
+        projects: document.getElementById('nav-projects'),
         budgets: document.getElementById('nav-budgets'),
+        materials: document.getElementById('nav-materials'),
         logout: document.getElementById('nav-logout')
     };
 
