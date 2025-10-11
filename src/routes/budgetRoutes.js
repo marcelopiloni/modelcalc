@@ -10,6 +10,7 @@ router.post('/', auth, validateBudget, BudgetController.createBudget.bind(Budget
 router.get('/', auth, BudgetController.getAllBudgets.bind(BudgetController));
 router.get('/:id', auth, BudgetController.getBudgetById.bind(BudgetController));
 router.get('/:id/download/excel', downloadAuth, BudgetController.downloadBudgetExcel.bind(BudgetController));
+router.get('/:id/download/pdf', downloadAuth, BudgetController.downloadBudgetPDF.bind(BudgetController));
 router.put('/:id', auth, BudgetController.updateBudget.bind(BudgetController));
 router.delete('/:id', auth, BudgetController.deleteBudget.bind(BudgetController));
 
