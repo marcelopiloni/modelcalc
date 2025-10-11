@@ -50,10 +50,18 @@ function displayProjects() {
                 </span>
             </td>
             <td>
-                <button onclick="editProject('${project._id}')" class="btn btn-sm btn-primary">Editar</button>
-                <button onclick="deleteProject('${project._id}')" class="btn btn-sm btn-danger">Excluir</button>
+                <button class="btn btn-sm btn-primary edit-project-btn" data-project-id="${project._id}">Editar</button>
+                <button class="btn btn-sm btn-danger delete-project-btn" data-project-id="${project._id}">Excluir</button>
             </td>
         `;
+        
+        // Add event listeners to buttons in this row
+        const editBtn = row.querySelector('.edit-project-btn');
+        const deleteBtn = row.querySelector('.delete-project-btn');
+        
+        editBtn.addEventListener('click', () => editProject(project._id));
+        deleteBtn.addEventListener('click', () => deleteProject(project._id));
+        
         tableBody.appendChild(row);
     });
 }
@@ -125,6 +133,9 @@ function showNewProject() {
     showSection('project-form-section');
 }
 
+// Expose globally immediately
+window.showNewProject = showNewProject;
+
 // Edit project
 function editProject(projectId) {
     const project = currentProjects.find(p => p._id === projectId);
@@ -139,6 +150,9 @@ function editProject(projectId) {
     
     showSection('project-form-section');
 }
+
+// Expose globally immediately
+window.editProject = editProject;
 
 // Delete project
 async function deleteProject(projectId) {
@@ -165,6 +179,9 @@ async function deleteProject(projectId) {
         alert('Erro ao excluir projeto');
     }
 }
+
+// Expose globally immediately
+window.deleteProject = deleteProject;
 
 // Handle project form submit
 document.getElementById('project-form').addEventListener('submit', async (e) => {
@@ -217,7 +234,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Expose functions globally for onclick handlers
-window.editProject = editProject;
-window.deleteProject = deleteProject;
-window.showNewProject = showNewProject;
+// Additional global exposures
+window.loadProjects = loadProjects;
