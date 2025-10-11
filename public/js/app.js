@@ -124,15 +124,78 @@ document.addEventListener('DOMContentLoaded', () => {
         auth.logout();
     });
 
-    document.getElementById('new-budget-btn').addEventListener('click', () => {
+    document.getElementById('new-budget-btn').addEventListener('click', async () => {
         forms.budget.reset();
         document.getElementById('budget-id').value = '';
         document.getElementById('budget-form-title').textContent = 'Novo Orçamento';
+        
+        // Carregar projetos no select
+        await loadProjectsInSelect();
+        
         showSection('budgetForm');
     });
 
     document.getElementById('cancel-budget-btn').addEventListener('click', () => {
         showSection('budgets');
+    });
+
+    forms.budget.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const materials = [];
+            const processes = [];
+
+            // Coletar materiais
+            document.querySelectorAll('.material-row').forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value && inputs[1].value && inputs[2].value) {
+                    materials.push({
+                        name: inputs[0].value,
+                        quantity: parseFloat(inputs[1].value),
+                        unitCost: parseFloat(inputs[2].value)
+                    });
+                }
+            });
+
+            // Coletar processos
+            document.querySelectorAll('.process-row').forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value && inputs[1].value && inputs[2].value) {
+                    processes.push({
+                        name: inputs[0].value,
+                        duration: parseFloat(inputs[1].value),
+                        hourlyRate: parseFloat(inputs[2].value)
+                    });
+                }
+            });
+
+            const budgetData = {
+                projectId: document.getElementById('budget-project').value,
+                clientId: document.getElementById('budget-project').selectedOptions[0]?.dataset.clientId || auth.user.id,
+                description: document.getElementById('budget-description').value,
+                materials: materials,
+                processes: processes,
+                laborCost: parseFloat(document.getElementById('budget-labor-cost').value) || 0,
+                margin: parseFloat(document.getElementById('budget-margin').value) || 0
+            };
+
+            await budgets.create(budgetData);
+            showAlert('Orçamento criado com sucesso!', 'success');
+            showSection('budgets');
+            loadBudgets();
+        } catch (error) {
+            showAlert('Erro ao criar orçamento: ' + error.message);
+        }
+    });
+
+    // Adicionar material
+    document.getElementById('add-material-btn').addEventListener('click', () => {
+        addMaterialRow();
+    });
+
+    // Adicionar processo
+    document.getElementById('add-process-btn').addEventListener('click', () => {
+        addProcessRow();
     });
 
     // Inicialização
@@ -142,6 +205,58 @@ document.addEventListener('DOMContentLoaded', () => {
         showSection('login');
     }
 });
+
+// Funções para carregar dados
+async function loadProjectsInSelect() {
+    try {
+        const projectsList = await projects.list();
+        const select = document.getElementById('budget-project');
+        select.innerHTML = '<option value="">Selecione um projeto</option>';
+        
+        projectsList.forEach(project => {
+            const option = document.createElement('option');
+            option.value = project._id;
+            option.textContent = `${project.name} - ${project.clientId.name}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showAlert('Erro ao carregar projetos: ' + error.message);
+    }
+}
+
+// Funções para gerenciar materiais
+function addMaterialRow() {
+    const container = document.getElementById('materials-list');
+    const row = document.createElement('div');
+    row.className = 'material-row';
+    row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+    
+    row.innerHTML = `
+        <input type="text" placeholder="Nome do material" required style="flex: 2;">
+        <input type="number" placeholder="Quantidade" min="0.01" step="0.01" required style="flex: 1;">
+        <input type="number" placeholder="Custo unitário" min="0" step="0.01" required style="flex: 1;">
+        <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding: 5px 10px;">X</button>
+    `;
+    
+    container.appendChild(row);
+}
+
+// Funções para gerenciar processos
+function addProcessRow() {
+    const container = document.getElementById('processes-list');
+    const row = document.createElement('div');
+    row.className = 'process-row';
+    row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+    
+    row.innerHTML = `
+        <input type="text" placeholder="Nome do processo" required style="flex: 2;">
+        <input type="number" placeholder="Duração (horas)" min="0.1" step="0.1" required style="flex: 1;">
+        <input type="number" placeholder="Custo/hora" min="0" step="0.01" required style="flex: 1;">
+        <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding: 5px 10px;">X</button>
+    `;
+    
+    container.appendChild(row);
+}
 
 // Funções globais para interação com a tabela
 function viewBudget(id) {

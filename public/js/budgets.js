@@ -1,3 +1,89 @@
+// Gerenciamento de projetos
+const projects = {
+    async list() {
+        try {
+            const response = await fetch('/api/projects', {
+                headers: auth.getHeaders()
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao listar projetos');
+            }
+
+            return data.data;
+        } catch (error) {
+            console.error('Erro ao listar projetos:', error);
+            throw error;
+        }
+    },
+
+    async create(projectData) {
+        try {
+            const response = await fetch('/api/projects', {
+                method: 'POST',
+                headers: auth.getHeaders(),
+                body: JSON.stringify(projectData)
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao criar projeto');
+            }
+
+            return data.data;
+        } catch (error) {
+            console.error('Erro ao criar projeto:', error);
+            throw error;
+        }
+    }
+};
+
+// Gerenciamento de materiais
+const materials = {
+    async list() {
+        try {
+            const response = await fetch('/api/materials', {
+                headers: auth.getHeaders()
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao listar materiais');
+            }
+
+            return data.data;
+        } catch (error) {
+            console.error('Erro ao listar materiais:', error);
+            throw error;
+        }
+    },
+
+    async create(materialData) {
+        try {
+            const response = await fetch('/api/materials', {
+                method: 'POST',
+                headers: auth.getHeaders(),
+                body: JSON.stringify(materialData)
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao criar material');
+            }
+
+            return data.data;
+        } catch (error) {
+            console.error('Erro ao criar material:', error);
+            throw error;
+        }
+    }
+};
+
 // Gerenciamento de orçamentos
 const budgets = {
     async list() {
