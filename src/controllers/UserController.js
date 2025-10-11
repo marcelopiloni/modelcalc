@@ -349,6 +349,77 @@ class UserController {
     }
 
     /**
+     * Criar novo usuário (Admin only) - permite criar gerentes
+     */
+    async createUser(req, res) {
+        try {
+            const { email, password, name, company, userType, role } = req.body;
+
+            // Validar campos obrigatórios
+            if (!email || !password || !name || !company || !userType || !role) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Todos os campos são obrigatórios'
+                });
+            }
+
+            // Validar role
+            const validRoles = ['admin', 'manager', 'operator', 'client'];
+            if (!validRoles.includes(role)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Role inválida. Use: admin, manager, operator ou client'
+                });
+            }
+
+            // Verificar se email já existe
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Email já cadastrado no sistema'
+                });
+            }
+
+            // Criar usuário
+            const user = new User({
+                email,
+                password, // Será hasheado pelo pre-save hook
+                name,
+                company,
+                userType,
+                role,
+                approved: true, // Usuários criados pelo admin são aprovados automaticamente
+                approvedBy: req.user.userId,
+                approvedAt: new Date()
+            });
+
+            await user.save();
+
+            res.status(201).json({
+                status: 'success',
+                message: `Usuário ${role} criado com sucesso`,
+                data: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    company: user.company,
+                    userType: user.userType,
+                    role: user.role,
+                    approved: user.approved
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao criar usuário:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Erro ao criar usuário',
+                error: error.message
+            });
+        }
+    }
+
+    /**
      * Buscar perfil do usuário logado
      */
     async getMyProfile(req, res) {

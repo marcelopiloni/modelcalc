@@ -172,11 +172,72 @@
             </div>
         </div>
 
-        <!-- User Management Section (Only for Managers) -->
+        <!-- User Management Section (Only for Managers and Admin) -->
         <div id="user-management-section" class="hidden">
             <div class="dashboard-header mb-4">
                 <h2>Gerenciamento de Usuários</h2>
                 <p class="text-muted">Aprovar e gerenciar usuários do sistema</p>
+            </div>
+
+            <!-- Create User Section (Admin Only) -->
+            <div id="create-user-section" class="card mb-4 hidden">
+                <div class="card-header">
+                    <h3>🔑 Criar Novo Usuário (Admin)</h3>
+                </div>
+                <div class="card-body">
+                    <form id="create-user-form">
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="new-user-name">Nome Completo:</label>
+                                <input type="text" id="new-user-name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-user-email">Email:</label>
+                                <input type="email" id="new-user-email" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="new-user-password">Senha:</label>
+                                <input type="password" id="new-user-password" class="form-control" required minlength="6">
+                                <small class="form-text text-muted">Mínimo 6 caracteres</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-user-company">Empresa:</label>
+                                <input type="text" id="new-user-company" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="new-user-type">Tipo de Usuário:</label>
+                                <select id="new-user-type" class="form-control" required>
+                                    <option value="supplier">Fornecedor</option>
+                                    <option value="client">Cliente</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-user-role">Função (Role):</label>
+                                <select id="new-user-role" class="form-control" required>
+                                    <option value="manager">👔 Gerente</option>
+                                    <option value="operator">👨‍💼 Operador</option>
+                                    <option value="client">👤 Cliente</option>
+                                    <option value="admin">🔑 Administrador</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    <strong>Gerente:</strong> Pode aprovar usuários e gerenciar dados<br>
+                                    <strong>Operador:</strong> Pode criar orçamentos e projetos<br>
+                                    <strong>Cliente:</strong> Pode solicitar orçamentos<br>
+                                    <strong>Admin:</strong> Acesso total + criar gerentes
+                                </small>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="text-align: right; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-success">
+                                ➕ Criar Usuário
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Pending Users Section -->

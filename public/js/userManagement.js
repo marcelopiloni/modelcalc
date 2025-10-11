@@ -1,6 +1,39 @@
-// User Management for Managers
+// User Management for Managers and Admin
 let pendingUsers = [];
 let allUsers = [];
+
+/**
+ * Create new user (Admin only)
+ */
+async function createNewUser(userData) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/auth/create', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(`Usuário ${userData.role} criado com sucesso!`, 'success');
+            // Recarregar lista de usuários
+            await loadAllUsers();
+            return true;
+        } else {
+            showAlert(result.message || 'Erro ao criar usuário', 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error creating user:', error);
+        showAlert('Erro ao criar usuário: ' + error.message, 'error');
+        return false;
+    }
+}
 
 // Load pending users for approval
 async function loadPendingUsers() {
@@ -267,6 +300,7 @@ async function updateUserRole(userId, role) {
 // Helper function
 function getRoleName(role) {
     const roleNames = {
+        'admin': 'Administrador',
         'manager': 'Gerente',
         'operator': 'Operador',
         'client': 'Cliente'
@@ -274,15 +308,51 @@ function getRoleName(role) {
     return roleNames[role] || role;
 }
 
-// Show user management section (for managers)
+// Show user management section (for managers and admin)
 function showUserManagement() {
     hideAllSections();
     document.getElementById('user-management-section').classList.remove('hidden');
+    
+    // Show create user section only for admin
+    const createUserSection = document.getElementById('create-user-section');
+    if (createUserSection) {
+        if (auth.isAdmin()) {
+            createUserSection.classList.remove('hidden');
+        } else {
+            createUserSection.classList.add('hidden');
+        }
+    }
+    
     loadPendingUsers();
     loadAllUsers();
 }
 
+// Setup create user form (Admin only)
+function setupCreateUserForm() {
+    const form = document.getElementById('create-user-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const userData = {
+            name: document.getElementById('new-user-name').value,
+            email: document.getElementById('new-user-email').value,
+            password: document.getElementById('new-user-password').value,
+            company: document.getElementById('new-user-company').value,
+            userType: document.getElementById('new-user-type').value,
+            role: document.getElementById('new-user-role').value
+        };
+
+        const success = await createNewUser(userData);
+        if (success) {
+            form.reset();
+        }
+    });
+}
+
 // Expose functions globally
+window.createNewUser = createNewUser;
 window.approveUser = approveUser;
 window.toggleUserStatus = toggleUserStatus;
 window.showEditUserModal = showEditUserModal;
@@ -292,7 +362,12 @@ window.loadAllUsers = loadAllUsers;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('token') && auth.isManager()) {
+    if (localStorage.getItem('token') && auth.isAdminOrManager()) {
+        // Setup create user form for admin
+        if (auth.isAdmin()) {
+            setupCreateUserForm();
+        }
+        
         // Load users data in background
         setTimeout(() => {
             loadPendingUsers();

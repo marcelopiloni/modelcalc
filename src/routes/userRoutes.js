@@ -4,7 +4,7 @@ const UserController = require('../controllers/UserController');
 const auth = require('../middleware/auth');
 const { body } = require('express-validator');
 const { validateRequest } = require('../middleware/validation');
-const { isManager, isAuthenticated } = require('../middleware/rbac');
+const { isAdmin, isManager, isAuthenticated } = require('../middleware/rbac');
 
 // Validação para registro de usuário
 const registerValidation = [
@@ -35,10 +35,20 @@ router.delete('/:id', auth, UserController.deleteUser);
 // Perfil do usuário logado
 router.get('/me', auth, isAuthenticated, UserController.getMyProfile);
 
-// Rotas de gerenciamento de usuários (apenas gerentes)
+// Rotas de gerenciamento de usuários (gerentes e admin)
 router.get('/pending', auth, isManager, UserController.getPendingUsers);
 router.patch('/:id/approve', auth, isManager, UserController.approveUser);
 router.patch('/:id/role', auth, isManager, UserController.updateUserRole);
 router.patch('/:id/toggle-status', auth, isManager, UserController.toggleUserStatus);
+
+// Rota para admin criar usuários (incluindo gerentes)
+router.post('/create', auth, isAdmin, [
+    body('email').isEmail().withMessage('Email inválido'),
+    body('password').isLength({ min: 6 }).withMessage('A senha deve ter no mínimo 6 caracteres'),
+    body('name').notEmpty().withMessage('Nome é obrigatório'),
+    body('company').notEmpty().withMessage('Empresa é obrigatória'),
+    body('userType').isIn(['client', 'supplier']).withMessage('Tipo de usuário inválido'),
+    body('role').isIn(['admin', 'manager', 'operator', 'client']).withMessage('Role inválida')
+], validateRequest, UserController.createUser);
 
 module.exports = router;
