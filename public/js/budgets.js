@@ -232,6 +232,11 @@ const budgets = {
     downloadExcel(id) {
         const token = auth.token;
         window.open(`/api/budgets/${id}/download/excel?token=${token}`, '_blank');
+    },
+
+    downloadPDF(id) {
+        const token = auth.token;
+        window.open(`/api/budgets/${id}/download/pdf?token=${token}`, '_blank');
     }
 };
 
@@ -255,3 +260,6 @@ async function loadProjectsInSelect() {
         console.error('Erro ao carregar projetos:', error);
     }
 }
+
+// Expose budgets object globally
+window.budgets = budgets;
