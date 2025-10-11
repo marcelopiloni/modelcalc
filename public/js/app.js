@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => alert.remove(), 5000);
     }
 
-    function updateNavigation() {
+    window.updateNavigation = function() {
         if (auth.isAuthenticated()) {
             Object.values(navLinks).forEach(link => {
                 if (link) link.classList.remove('hidden');
@@ -666,16 +666,16 @@ document.getElementById('nav-users').addEventListener('click', () => {
 // Check authentication and load data when page loads
 function initializeApp() {
     if (auth.isAuthenticated()) {
-        updateNavigation();
+        window.updateNavigation();
         // Pre-load data for better user experience
         setTimeout(() => {
-            loadBudgets();
+            if (typeof loadBudgets === 'function') loadBudgets();
             if (typeof loadProjects === 'function') loadProjects();
             if (typeof loadMaterials === 'function') loadMaterials();
             if (typeof loadCADFiles === 'function') loadCADFiles();
         }, 500);
     } else {
-        updateNavigation();
+        window.updateNavigation();
     }
 }
 

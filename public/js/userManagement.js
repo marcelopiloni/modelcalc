@@ -310,17 +310,34 @@ function getRoleName(role) {
 
 // Show user management section (for managers and admin)
 function showUserManagement() {
-    hideAllSections();
-    document.getElementById('user-management-section').classList.remove('hidden');
+    console.log('🔍 showUserManagement chamado');
+    console.log('🔍 auth.isAdmin():', auth.isAdmin());
+    console.log('🔍 auth.user:', auth.user);
+    
+    // Hide all sections first
+    if (typeof window.showSection === 'function') {
+        window.showSection('user-management-section');
+    } else {
+        // Fallback: hide manually
+        const allSections = document.querySelectorAll('main > div[id$="-section"]');
+        allSections.forEach(section => section.classList.add('hidden'));
+        document.getElementById('user-management-section').classList.remove('hidden');
+    }
     
     // Show create user section only for admin
     const createUserSection = document.getElementById('create-user-section');
+    console.log('🔍 createUserSection element:', createUserSection);
+    
     if (createUserSection) {
         if (auth.isAdmin()) {
+            console.log('✅ Removendo classe hidden do create-user-section');
             createUserSection.classList.remove('hidden');
         } else {
+            console.log('❌ Adicionando classe hidden ao create-user-section (não é admin)');
             createUserSection.classList.add('hidden');
         }
+    } else {
+        console.error('❌ Elemento create-user-section não encontrado!');
     }
     
     loadPendingUsers();
