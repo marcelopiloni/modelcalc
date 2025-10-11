@@ -14,7 +14,8 @@ async function loadProjects() {
         });
         
         if (response.ok) {
-            currentProjects = await response.json();
+            const result = await response.json();
+            currentProjects = result.data || [];
             displayProjects();
             updateProjectSelect();
         } else {
@@ -60,16 +61,20 @@ function displayProjects() {
 // Update project select in budget form
 function updateProjectSelect() {
     const projectSelect = document.getElementById('budget-project');
+    if (!projectSelect) return; // Elemento pode não existir na página atual
+    
     projectSelect.innerHTML = '<option value="">Selecione um projeto</option>';
     
-    currentProjects.forEach(project => {
-        if (project.status === 'active') {
-            const option = document.createElement('option');
-            option.value = project._id;
-            option.textContent = project.name;
-            projectSelect.appendChild(option);
-        }
-    });
+    if (Array.isArray(currentProjects)) {
+        currentProjects.forEach(project => {
+            if (project.status === 'active') {
+                const option = document.createElement('option');
+                option.value = project._id;
+                option.textContent = project.name;
+                projectSelect.appendChild(option);
+            }
+        });
+    }
 }
 
 // Load clients for project form
@@ -85,7 +90,7 @@ async function loadClients() {
         
         if (response.ok) {
             const users = await response.json();
-            currentClients = users.filter(user => user.userType === 'client');
+            currentClients = (Array.isArray(users) ? users : users.data || []).filter(user => user.userType === 'client');
             updateClientSelect();
         } else {
             alert('Erro ao carregar clientes');
@@ -98,14 +103,18 @@ async function loadClients() {
 // Update client select in project form
 function updateClientSelect() {
     const clientSelect = document.getElementById('project-client');
+    if (!clientSelect) return; // Elemento pode não existir na página atual
+    
     clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
     
-    currentClients.forEach(client => {
-        const option = document.createElement('option');
-        option.value = client._id;
-        option.textContent = client.name;
-        clientSelect.appendChild(option);
-    });
+    if (Array.isArray(currentClients)) {
+        currentClients.forEach(client => {
+            const option = document.createElement('option');
+            option.value = client._id;
+            option.textContent = client.name;
+            clientSelect.appendChild(option);
+        });
+    }
 }
 
 // Show new project form
