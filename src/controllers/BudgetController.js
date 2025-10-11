@@ -41,6 +41,43 @@ class BudgetController {
         }
     }
 
+    async downloadBudgetPDF(req, res) {
+        try {
+            const { id } = req.params;
+            const budget = await Budget.findById(id)
+                .populate('projectId')
+                .populate('clientId')
+                .populate('cadFiles');
+
+            if (!budget) {
+                return res.status(404).json({
+                    status: 'error',
+                    message: 'Orçamento não encontrado'
+                });
+            }
+
+            if (req.user.userType === 'client' && budget.clientId.toString() !== req.user.userId) {
+                return res.status(403).json({
+                    status: 'error',
+                    message: 'Acesso não autorizado'
+                });
+            }
+
+            const { budgetToPDF } = require('../utils/pdfExport');
+            const buffer = await budgetToPDF(budget);
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=orcamento_${id}.pdf`);
+            res.send(buffer);
+        } catch (error) {
+            res.status(500).json({
+                status: 'error',
+                message: 'Erro ao gerar PDF do orçamento',
+                error: error.message
+            });
+        }
+    }
+
     async createBudget(req, res) {
         try {
             // Verificar se o projeto existe
