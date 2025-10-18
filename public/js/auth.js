@@ -47,10 +47,17 @@ const auth = {
                 throw new Error(data.message || 'Erro ao registrar');
             }
 
-            this.token = data.token;
-            this.user = data.user;
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            if (data.token && data.user) {
+                this.token = data.token;
+                this.user = data.user;
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+            } else {
+                this.token = null;
+                this.user = null;
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            }
 
             return data;
         } catch (error) {
