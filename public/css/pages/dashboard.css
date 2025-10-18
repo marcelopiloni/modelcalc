@@ -1,0 +1,430 @@
+/* ============================================
+   DASHBOARD PAGE
+   ============================================ */
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeIn var(--transition-base) ease-out;
+}
+
+.dashboard-header h2 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: all var(--transition-base);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    animation: scaleIn var(--transition-base) ease-out;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark), var(--secondary-color));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-xl);
+}
+
+.stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.stat-icon {
+    font-size: 3rem;
+    opacity: 0.9;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: all var(--transition-base);
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.stat-content h3 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-content p {
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Recent Lists */
+.recent-list {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.recent-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.recent-list::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: var(--radius-full);
+}
+
+.recent-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: var(--radius-full);
+}
+
+.recent-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--primary-dark), #3730a3);
+}
+
+.recent-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all var(--transition-base);
+    border-radius: var(--radius-md);
+}
+
+.recent-item:hover {
+    background: linear-gradient(90deg, rgba(79, 70, 229, 0.05), transparent);
+    transform: translateX(4px);
+}
+
+.recent-item:last-child {
+    border-bottom: none;
+}
+
+.recent-item-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.recent-item-subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.recent-item-value {
+    font-weight: 700;
+    color: var(--secondary-color);
+    font-size: 1.125rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    animation: fadeIn var(--transition-base) ease-out;
+}
+
+.quick-actions h3 {
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.action-buttons .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+/* CAD Files Grid */
+.cad-files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.cad-files-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.cad-files-grid::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: var(--radius-full);
+}
+
+.cad-files-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: var(--radius-full);
+}
+
+.cad-file-item {
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.cad-file-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--transition-base);
+}
+
+.cad-file-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.cad-file-item:hover::before {
+    transform: scaleX(1);
+}
+
+.cad-file-item.selected {
+    border-color: var(--secondary-color);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), white);
+    box-shadow: var(--shadow-md);
+}
+
+.cad-file-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.cad-file-icon {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.cad-file-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    font-size: 1rem;
+}
+
+.cad-file-format {
+    background: linear-gradient(135deg, var(--info-color), #138496);
+    color: white;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: var(--shadow-sm);
+}
+
+.cad-file-details {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.cad-file-analysis {
+    background: linear-gradient(135deg, var(--light-bg), #f1f5f9);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    border: 1px solid var(--border-color);
+}
+
+.analysis-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.375rem;
+    padding: 0.25rem 0;
+}
+
+.analysis-item:last-child {
+    margin-bottom: 0;
+}
+
+.analysis-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.analysis-item span {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Selected CAD Files */
+.selected-cad-files {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.selected-cad-files::-webkit-scrollbar {
+    width: 6px;
+}
+
+.selected-cad-files::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: var(--radius-full);
+}
+
+.selected-cad-files::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--secondary-color), #059669);
+    border-radius: var(--radius-full);
+}
+
+.selected-cad-file {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), white);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--secondary-color);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.selected-cad-file:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.selected-cad-file-info {
+    flex: 1;
+}
+
+.selected-cad-file-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.selected-cad-file-details {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.remove-cad-file {
+    background: linear-gradient(135deg, var(--danger-color), #c82333);
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.remove-cad-file:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: rotate(90deg) scale(1.15);
+    box-shadow: var(--shadow-md);
+}
+
+/* Upload Progress */
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background: var(--light-bg);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark), var(--primary-color));
+    background-size: 200% 100%;
+    width: 0%;
+    transition: width var(--transition-slow) ease;
+    animation: progressShine 2s linear infinite;
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+}
+
+@keyframes progressShine {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
