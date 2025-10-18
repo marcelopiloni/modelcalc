@@ -30,12 +30,19 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ message: 'Usuário inativo' });
         }
 
+        // Verificar aprovação (exceto admin e manager)
+        if (!user.approved && !['admin', 'manager'].includes(user.role)) {
+            return res.status(403).json({ message: 'Usuário aguardando aprovação do gerente' });
+        }
+
         // Adicionar informações do usuário ao request
         req.user = {
             userId: user._id,
             userType: user.userType,
             email: user.email,
-            name: user.name
+            name: user.name,
+            role: user.role,
+            approved: user.approved
         };
 
         next();
