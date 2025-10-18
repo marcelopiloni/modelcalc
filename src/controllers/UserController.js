@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 class UserController {
     async register(req, res) {
         try {
-            console.log('Dados recebidos para registro:', req.body);
             const { email, password, name, company, userType } = req.body;
 
             // Verificar se usuário já existe
@@ -29,7 +28,23 @@ class UserController {
 
             await user.save();
 
-            // Gerar token JWT
+            // Operadores aguardam aprovação; clientes recebem acesso imediato
+            if (!user.approved) {
+                return res.status(201).json({
+                    message: 'Usuário criado com sucesso. Aguardando aprovação do gerente.',
+                    user: {
+                        id: user._id,
+                        name: user.name,
+                        email: user.email,
+                        company: user.company,
+                        userType: user.userType,
+                        role: user.role,
+                        approved: user.approved
+                    }
+                });
+            }
+
+            // Gerar token JWT para usuários aprovados automaticamente (clientes/admin)
             const token = jwt.sign(
                 { userId: user._id, userType: user.userType, role: user.role },
                 process.env.JWT_SECRET,
@@ -37,7 +52,7 @@ class UserController {
             );
 
             res.status(201).json({
-                message: 'Usuário criado com sucesso' + (role !== 'client' ? '. Aguardando aprovação do gerente.' : ''),
+                message: 'Usuário criado com sucesso',
                 token,
                 user: {
                     id: user._id,
@@ -58,23 +73,16 @@ class UserController {
     async login(req, res) {
         try {
             const { email, password } = req.body;
-            console.log('🔐 Tentativa de login:', { email, passwordLength: password?.length });
-
             // Encontrar usuário
             const user = await User.findOne({ email });
             if (!user) {
-                console.log('❌ Usuário não encontrado:', email);
                 return res.status(401).json({ message: 'Credenciais inválidas' });
             }
 
-            console.log('✓ Usuário encontrado:', { email: user.email, role: user.role, approved: user.approved });
-
             // Verificar senha
             const isMatch = await user.comparePassword(password);
-            console.log('🔑 Comparação de senha:', { isMatch, passwordProvided: password.substring(0, 3) + '***' });
             
             if (!isMatch) {
-                console.log('❌ Senha incorreta');
                 return res.status(401).json({ message: 'Credenciais inválidas' });
             }
 
@@ -112,8 +120,7 @@ class UserController {
 
     async getUsers(req, res) {
         try {
-            // Apenas usuários do tipo 'supplier' podem listar todos os usuários
-            if (req.user.userType !== 'supplier') {
+            if (!['admin', 'manager'].includes(req.user.role)) {
                 return res.status(403).json({ message: 'Acesso não autorizado' });
             }
 
@@ -132,8 +139,10 @@ class UserController {
             // Não permitir atualização de senha por esta rota
             delete updates.password;
 
-            // Apenas permitir que usuários atualizem seus próprios dados ou sejam suppliers
-            if (req.user.userType !== 'supplier' && req.user.userId !== id) {
+            const isSelfUpdate = req.user.userId.toString() === id.toString();
+            const isManager = ['admin', 'manager'].includes(req.user.role);
+
+            if (!isSelfUpdate && !isManager) {
                 return res.status(403).json({ message: 'Acesso não autorizado' });
             }
 
@@ -157,8 +166,7 @@ class UserController {
         try {
             const { id } = req.params;
 
-            // Apenas suppliers podem deletar usuários
-            if (req.user.userType !== 'supplier') {
+            if (req.user.role !== 'admin') {
                 return res.status(403).json({ message: 'Acesso não autorizado' });
             }
 
@@ -180,7 +188,13 @@ class UserController {
      */
     async getPendingUsers(req, res) {
         try {
-            const pendingUsers = await User.find({ approved: false })
+            const pendingUsers = await User.find({
+                $or: [
+                    { approved: false },
+                    { approved: { $exists: false } },
+                    { approved: null }
+                ]
+            })
                 .select('-password')
                 .sort({ createdAt: -1 });
 
