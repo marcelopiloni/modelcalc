@@ -1,6 +1,7 @@
 // User Management for Managers and Admin
 let pendingUsers = [];
 let allUsers = [];
+let createUserFormInitialized = false;
 
 /**
  * Create new user (Admin only)
@@ -43,7 +44,8 @@ async function loadPendingUsers() {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            cache: 'no-store'
         });
 
         if (response.ok) {
@@ -60,14 +62,19 @@ async function loadPendingUsers() {
 
 // Display pending users
 function displayPendingUsers() {
-    const container = document.getElementById('pending-users-list');
-    
+    const container = document.getElementById('pending-users-container');
+    const badge = document.getElementById('pending-count');
+
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
+    if (badge) {
+        badge.textContent = pendingUsers.length;
+    }
+
     if (pendingUsers.length === 0) {
-        container.innerHTML = '<p class="text-muted">Nenhum usuário pendente de aprovação</p>';
+        container.innerHTML = '<p class="text-muted text-center">Nenhum usuário pendente de aprovação</p>';
         return;
     }
     
@@ -105,16 +112,28 @@ function displayPendingUsers() {
                     <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Gerente</option>
                     <option value="client" ${user.role === 'client' ? 'selected' : ''}>Cliente</option>
                 </select>
-                <button class="btn btn-success btn-sm" onclick="approveUser('${user._id}', true)">
+                <button class="btn btn-success btn-sm approve-btn" data-user-id="${user._id}" data-action="true">
                     ✓ Aprovar
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="approveUser('${user._id}', false)">
+                <button class="btn btn-danger btn-sm reject-btn" data-user-id="${user._id}" data-action="false">
                     ✗ Rejeitar
                 </button>
             </div>
         `;
         
         container.appendChild(userCard);
+        
+        // Add event listeners to buttons
+        const approveBtn = userCard.querySelector('.approve-btn');
+        const rejectBtn = userCard.querySelector('.reject-btn');
+        
+        if (approveBtn) {
+            approveBtn.addEventListener('click', () => approveUser(user._id, true));
+        }
+        
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', () => approveUser(user._id, false));
+        }
     });
 }
 
@@ -162,7 +181,8 @@ async function loadAllUsers() {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            cache: 'no-store'
         });
 
         if (response.ok) {
@@ -229,20 +249,49 @@ function displayAllUsers() {
             <td>${statusBadge}</td>
             <td>${createdDate}</td>
             <td>
-                <select class="form-control form-control-sm" style="display: inline-block; width: auto; margin-right: 5px;" onchange="updateUserRole('${user._id}', this.value)">
+                <select class="form-control form-control-sm role-select" data-user-id="${user._id}" style="display: inline-block; width: auto; margin-right: 5px;">
                     <option value="">Alterar Role...</option>
                     <option value="manager">👔 Gerente</option>
                     <option value="operator">👨‍💼 Operador</option>
                     <option value="client">👤 Cliente</option>
                     ${auth.isAdmin() ? '<option value="admin">🔑 Admin</option>' : ''}
                 </select>
-                <button class="btn btn-${user.active ? 'warning' : 'success'} btn-sm" onclick="toggleUserStatus('${user._id}')">
+                <button class="btn btn-${user.active ? 'warning' : 'success'} btn-sm toggle-status-btn" data-user-id="${user._id}">
                     ${user.active ? '🚫 Desativar' : '✓ Ativar'}
                 </button>
+                ${auth.isAdmin() ? `<button class="btn btn-danger btn-sm delete-user-btn" data-user-id="${user._id}">
+                    🗑️ Excluir
+                </button>` : ''}
             </td>
         `;
         
         tableBody.appendChild(row);
+        
+        // Add event listeners
+        const roleSelect = row.querySelector('.role-select');
+        const toggleBtn = row.querySelector('.toggle-status-btn');
+        const deleteBtn = row.querySelector('.delete-user-btn');
+        
+        if (roleSelect) {
+            roleSelect.addEventListener('change', (e) => {
+                const newRole = e.target.value;
+                if (newRole) {
+                    updateUserRole(user._id, newRole);
+                }
+            });
+        }
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                toggleUserStatus(user._id);
+            });
+        }
+        
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                deleteUser(user._id);
+            });
+        }
     });
 }
 
@@ -322,6 +371,37 @@ async function updateUserRole(userId, role) {
     }
 }
 
+// Delete user (Admin only)
+async function deleteUser(userId) {
+    if (!confirm('⚠️ ATENÇÃO: Tem certeza que deseja EXCLUIR permanentemente este usuário?\n\nEsta ação NÃO pode ser desfeita!')) {
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/auth/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert(result.message || 'Usuário excluído com sucesso', 'success');
+            loadAllUsers();
+            loadPendingUsers(); // Refresh both lists
+        } else {
+            showAlert(result.message || 'Erro ao excluir usuário', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showAlert('Erro ao excluir usuário', 'error');
+    }
+}
+
 // Helper function
 function getRoleName(role) {
     const roleNames = {
@@ -361,6 +441,11 @@ function showUserManagement() {
         }
     }
     
+    if (auth.isAdmin() && !createUserFormInitialized) {
+        setupCreateUserForm();
+        createUserFormInitialized = true;
+    }
+
     loadPendingUsers();
     loadAllUsers();
 }
@@ -391,7 +476,11 @@ function setupCreateUserForm() {
     const form = document.getElementById('create-user-form');
     if (!form) return;
 
-    form.addEventListener('submit', async (e) => {
+    // Remove any existing listeners to avoid duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+
+    newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const userData = {
@@ -405,10 +494,29 @@ function setupCreateUserForm() {
 
         const success = await createNewUser(userData);
         if (success) {
-            form.reset();
+            newForm.reset();
             closeCreateUserModal(); // Close modal on success
         }
     });
+
+    // Setup modal close buttons
+    const closeBtn = document.getElementById('close-create-user-modal');
+    const cancelBtn = document.getElementById('cancel-create-user-btn');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeCreateUserModal);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeCreateUserModal);
+    }
+
+    // Setup open button
+    const openBtn = document.getElementById('create-user-btn');
+    if (openBtn) {
+        openBtn.removeEventListener('click', openCreateUserModal);
+        openBtn.addEventListener('click', openCreateUserModal);
+    }
 }
 
 // Expose functions globally
@@ -416,24 +524,10 @@ window.createNewUser = createNewUser;
 window.approveUser = approveUser;
 window.toggleUserStatus = toggleUserStatus;
 window.updateUserRole = updateUserRole;
+window.deleteUser = deleteUser;
 window.showEditUserModal = showEditUserModal;
 window.showUserManagement = showUserManagement;
 window.loadPendingUsers = loadPendingUsers;
 window.loadAllUsers = loadAllUsers;
 window.openCreateUserModal = openCreateUserModal;
 window.closeCreateUserModal = closeCreateUserModal;
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('token') && auth.isAdminOrManager()) {
-        // Setup create user form for admin
-        if (auth.isAdmin()) {
-            setupCreateUserForm();
-        }
-        
-        // Load users data in background
-        setTimeout(() => {
-            loadPendingUsers();
-        }, 2000);
-    }
-});
