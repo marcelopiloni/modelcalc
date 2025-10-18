@@ -4,7 +4,7 @@ const UserController = require('../controllers/UserController');
 const auth = require('../middleware/auth');
 const { body } = require('express-validator');
 const { validateRequest } = require('../middleware/validation');
-const { isAdmin, isManager, isAuthenticated } = require('../middleware/rbac');
+const { isAdmin, isManager, isAdminOrManager, isAuthenticated } = require('../middleware/rbac');
 
 // Validação para registro de usuário
 const registerValidation = [
@@ -26,9 +26,9 @@ router.post('/register', registerValidation, validateRequest, UserController.reg
 router.post('/login', loginValidation, validateRequest, UserController.login);
 
 // Rotas protegidas
-router.get('/', auth, UserController.getUsers);
+router.get('/', auth, isAdminOrManager, UserController.getUsers);
 router.put('/:id', auth, UserController.updateUser);
-router.delete('/:id', auth, UserController.deleteUser);
+router.delete('/:id', auth, isAdmin, UserController.deleteUser);
 
 // ========== ROTAS RBAC ==========
 
